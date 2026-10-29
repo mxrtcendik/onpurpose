@@ -1,0 +1,280 @@
+@font-face {
+  font-family: Geist;
+  font-style: normal;
+  font-display: swap;
+  font-weight: 100 900;
+  src: url("../node_modules/@fontsource-variable/geist/files/geist-latin-wght-normal.woff2")
+    format("woff2");
+}
+
+@font-face {
+  font-family: "Geist Mono";
+  font-style: normal;
+  font-display: swap;
+  font-weight: 100 900;
+  src: url("../node_modules/@fontsource-variable/geist-mono/files/geist-mono-latin-wght-normal.woff2")
+    format("woff2");
+}
+
+@layer hold-button, utilities;
+
+:root {
+  color-scheme: light dark;
+  --muted: color-mix(in srgb, canvastext 68%, transparent);
+  --rule: color-mix(in srgb, canvastext 14%, transparent);
+  --code: color-mix(in srgb, canvastext 6%, transparent);
+  --measure: 40rem;
+  --radius: 0.5rem;
+}
+
+html {
+  background: canvas;
+  color: canvastext;
+}
+
+body {
+  margin: 0;
+  background: canvas;
+  color: canvastext;
+  font-family: Geist, ui-sans-serif, system-ui, sans-serif;
+  font-size: 16px;
+  font-synthesis: none;
+  letter-spacing: -0.011em;
+  line-height: 1.5;
+  text-rendering: optimizeLegibility;
+}
+
+::selection {
+  background: color-mix(in srgb, canvastext 16%, transparent);
+}
+
+.page {
+  box-sizing: border-box;
+  max-width: 68rem;
+  margin-inline: auto;
+  padding: 3.25rem max(1.25rem, env(safe-area-inset-right)) 5rem
+    max(1.25rem, env(safe-area-inset-left));
+}
+
+h1,
+h2,
+h3,
+p {
+  margin: 0;
+}
+
+a {
+  color: inherit;
+}
+
+p {
+  text-wrap: pretty;
+}
+
+h1 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+h2 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: -0.015em;
+}
+
+.lede,
+.section p,
+.example > p,
+.footer {
+  max-width: var(--measure);
+}
+
+.lede,
+.section > p,
+.example > p,
+.footer {
+  color: var(--muted);
+}
+
+.lede {
+  margin-top: 0.35rem;
+}
+
+.hero {
+  margin-top: 2.75rem;
+}
+
+.section {
+  margin-top: 4.25rem;
+  padding-top: 4.25rem;
+  border-top: 1px solid var(--rule);
+}
+
+.figure {
+  display: grid;
+  grid-template-columns: minmax(11rem, 0.7fr) minmax(0, 1.3fr);
+  gap: 1.25rem 2.5rem;
+  align-items: start;
+}
+
+.figure-demo {
+  min-width: 0;
+  border-radius: var(--radius);
+}
+
+.hero button {
+  font-size: 1.125rem;
+}
+
+.result,
+.state {
+  margin-top: 0.85rem;
+  color: var(--muted);
+}
+
+.hero .result {
+  max-width: 18rem;
+  min-height: 3em;
+}
+
+.result[data-count]:not([data-count="0"]) {
+  color: canvastext;
+}
+
+.example {
+  margin-top: 2.75rem;
+}
+
+.example > p {
+  margin-top: 0.35rem;
+}
+
+.example .figure {
+  margin-top: 1.15rem;
+}
+
+pre {
+  box-sizing: border-box;
+  min-width: 0;
+  margin: 0;
+  padding: 0.9rem 1rem 1rem;
+  overflow-x: auto;
+  scrollbar-width: thin;
+  border-radius: 0.75rem;
+  background: var(--code);
+  font-family: "Geist Mono", ui-monospace, monospace;
+  font-size: 0.8125rem;
+  letter-spacing: 0;
+  line-height: 1.55;
+}
+
+pre code {
+  font: inherit;
+}
+
+p code,
+.state {
+  font-family: "Geist Mono", ui-monospace, monospace;
+  font-size: 0.8125rem;
+  letter-spacing: 0;
+}
+
+.state[data-state="holding"],
+.state[data-state="confirmed"] {
+  color: canvastext;
+}
+
+.list {
+  max-width: var(--measure);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.list li {
+  padding: 0.8rem 0;
+  border-top: 1px solid var(--rule);
+}
+
+.list li:last-child {
+  border-bottom: 1px solid var(--rule);
+}
+
+.footer {
+  margin-top: 4.25rem;
+  font-size: 0.875rem;
+}
+
+.section > pre {
+  max-width: var(--measure);
+}
+
+.section h2 + p,
+.section h2 + pre,
+.section h2 + .figure,
+.section h2 + ul {
+  margin-top: 1rem;
+}
+
+.section pre + p {
+  margin-top: 0.85rem;
+}
+
+.section h3 {
+  margin-top: 2rem;
+}
+
+.section h3 + p,
+.section h3 + ul {
+  margin-top: 0.5rem;
+}
+
+.send {
+  color: light-dark(#087443, #8dcfb0);
+  --hold-fill: color-mix(in srgb, currentColor 28%, transparent);
+  --hold-confirmed: light-dark(#087443, #8dcfb0);
+}
+
+@layer utilities {
+  .rounded-full {
+    border-radius: 999px;
+  }
+
+  .font-medium {
+    font-weight: 500;
+  }
+
+  .text-red-700 {
+    color: #b91c1c;
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  @layer utilities {
+    .dark\:text-red-300 {
+      color: #fca5a5;
+    }
+  }
+}
+
+@media (max-width: 720px) {
+  .page {
+    padding-top: 2.25rem;
+  }
+
+  .figure {
+    grid-template-columns: minmax(0, 1fr);
+    align-items: stretch;
+  }
+
+  .hero {
+    margin-top: 2rem;
+  }
+}

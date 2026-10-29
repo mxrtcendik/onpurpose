@@ -1,0 +1,77 @@
+{
+  "name": "onpurpose",
+  "version": "0.0.0",
+  "description": "A hold-to-confirm button for React.",
+  "author": "Mert Cendik",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mxrtcendik/onpurpose.git",
+    "directory": "packages/onpurpose"
+  },
+  "bugs": {
+    "url": "https://github.com/mxrtcendik/onpurpose/issues"
+  },
+  "homepage": "https://github.com/mxrtcendik/onpurpose#readme",
+  "keywords": [
+    "react",
+    "button",
+    "hold",
+    "confirm",
+    "a11y"
+  ],
+  "type": "module",
+  "sideEffects": false,
+  "files": [
+    "dist"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "scripts": {
+    "build": "tsdown && node ./scripts/check-entry.js",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "dev": "tsdown --watch"
+  },
+  "peerDependencies": {
+    "react": "^18.3.1 || ^19.0.0",
+    "react-dom": "^18.3.1 || ^19.0.0"
+  },
+  "devDependencies": {
+    "@size-limit/preset-small-lib": "14.3.0",
+    "@testing-library/jest-dom": "7.0.1",
+    "@testing-library/react": "16.3.3",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "@vitejs/plugin-react": "6.1.2",
+    "happy-dom": "21.0.4",
+    "publint": "0.3.25",
+    "react": "19.3.1",
+    "react-dom": "19.3.1",
+    "size-limit": "14.3.0",
+    "tsdown": "0.23.4",
+    "typescript": "7.0.2",
+    "vitest": "5.0.5"
+  },
+  "size-limit": [
+    {
+      "path": "dist/index.js",
+      "import": "{ HoldButton }",
+      "limit": "4 kB",
+      "gzip": true,
+      "ignore": [
+        "react",
+        "react/jsx-runtime",
+        "react-dom"
+      ]
+    }
+  ]
+}
