@@ -15,6 +15,7 @@
     "format": "biome check --write .",
     "size": "pnpm --filter onpurpose build && pnpm --filter onpurpose exec size-limit",
     "publint": "pnpm --filter onpurpose build && pnpm --filter onpurpose exec publint",
+    "attw": "pnpm --filter onpurpose build && pnpm --filter onpurpose exec attw --pack . --profile esm-only",
     "release": "pnpm --filter onpurpose build && pnpm exec changeset publish"
   },
   "devDependencies": {

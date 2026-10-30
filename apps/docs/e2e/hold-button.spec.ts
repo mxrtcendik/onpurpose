@@ -54,8 +54,8 @@ async function runningProperties(page: Page) {
 async function geometry(page: Page) {
   return page.evaluate(() => {
     const button = document.querySelector("button");
-    const face = document.querySelector(".op-f");
-    const fill = document.querySelector(".op-i");
+    const face = document.querySelector(".onpurpose-frame");
+    const fill = document.querySelector(".onpurpose-fill");
     if (!button || !face || !fill) throw new Error("Missing button");
     const box = (node: Element) => {
       const element = node as HTMLElement;
@@ -111,7 +111,7 @@ test("a click does not confirm", async ({ page }) => {
 });
 
 test("only clip-path, transform, and opacity animate", async ({ page }) => {
-  const css = await page.locator("#op").textContent();
+  const css = await page.locator("#onpurpose").textContent();
   expect(css).toBeTruthy();
   const declared = transitionProperties(css ?? "");
   expect(declared).toContain("clip-path");
@@ -119,8 +119,8 @@ test("only clip-path, transform, and opacity animate", async ({ page }) => {
   for (const property of declared) expect(ALLOWED).toContain(property);
 
   const hold = await button(page);
-  const fill = hold.locator(".op-i");
-  const face = hold.locator(".op-f");
+  const fill = hold.locator(".onpurpose-fill");
+  const face = hold.locator(".onpurpose-frame");
   await press(page, hold);
   await expect(hold).toHaveAttribute("data-state", "holding");
 
@@ -227,8 +227,8 @@ test.describe("reduced motion", () => {
 
   test("keeps the fill and removes the press scale", async ({ page }) => {
     const hold = await button(page);
-    const fill = hold.locator(".op-i");
-    const face = hold.locator(".op-f");
+    const fill = hold.locator(".onpurpose-fill");
+    const face = hold.locator(".onpurpose-frame");
     await press(page, hold);
     await expect(hold).toHaveAttribute("data-state", "holding");
 
@@ -278,7 +278,7 @@ test("light and dark both paint the fill from currentColor", async ({ page }) =>
     await page.reload();
     const theme = await page.evaluate(() => {
       const button = document.querySelector("button");
-      const fill = document.querySelector(".op-i");
+      const fill = document.querySelector(".onpurpose-fill");
       if (!button || !fill) throw new Error("Missing button");
       return {
         text: getComputedStyle(button).color,
@@ -296,7 +296,7 @@ test("light and dark both paint the fill from currentColor", async ({ page }) =>
     await expect(hold).toHaveAttribute("data-state", "confirmed", { timeout: 3_000 });
     const confirmed = await page.evaluate(() => {
       const button = document.querySelector("button");
-      const face = document.querySelector(".op-f");
+      const face = document.querySelector(".onpurpose-frame");
       if (!button || !face) throw new Error("Missing button");
       return {
         background: getComputedStyle(button).backgroundColor,

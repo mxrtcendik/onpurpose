@@ -1,6 +1,6 @@
 {
   "name": "onpurpose",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "A hold-to-confirm button for React.",
   "author": "Mert Cendik",
   "license": "MIT",
@@ -12,7 +12,7 @@
   "bugs": {
     "url": "https://github.com/mxrtcendik/onpurpose/issues"
   },
-  "homepage": "https://github.com/mxrtcendik/onpurpose#readme",
+  "homepage": "https://onpurpose.lagoonte-ltd.workers.dev",
   "keywords": [
     "react",
     "button",
@@ -28,12 +28,13 @@
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/index.js"
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
     }
   },
   "publishConfig": {
     "access": "public",
-    "provenance": true
+    "provenance": false
   },
   "scripts": {
     "build": "tsdown && node ./scripts/check-entry.js",
@@ -46,6 +47,7 @@
     "react-dom": "^18.3.1 || ^19.0.0"
   },
   "devDependencies": {
+    "@arethetypeswrong/cli": "0.18.5",
     "@size-limit/preset-small-lib": "14.3.0",
     "@testing-library/jest-dom": "7.0.1",
     "@testing-library/react": "16.3.3",

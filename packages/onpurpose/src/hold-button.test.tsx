@@ -25,7 +25,7 @@ beforeEach(() => {
 afterEach(() => {
   cleanup();
   vi.useRealTimers();
-  document.getElementById("op")?.remove();
+  document.getElementById("onpurpose")?.remove();
 });
 
 function advance(ms: number) {
@@ -275,6 +275,7 @@ describe("HoldButton", () => {
     point("pointerDown", button);
     advance(1500);
     expect(onConfirm).not.toHaveBeenCalled();
+    expect(button).toHaveAttribute("data-disabled", "");
 
     rerender(<HoldButton onConfirm={onConfirm}>Hold to delete</HoldButton>);
     point("pointerDown", button);
@@ -388,18 +389,82 @@ describe("HoldButton", () => {
       </>,
     );
 
-    const styles = document.querySelectorAll("#op");
+    const styles = document.querySelectorAll("#onpurpose");
     expect(styles).toHaveLength(1);
     expect(styles[0]?.textContent).toContain("@layer hold-button");
     expect(styles[0]?.textContent).toContain("--hold-fill");
     expect(styles[0]?.textContent).toContain("--hold-confirmed");
+    expect(styles[0]?.textContent).toContain(".onpurpose");
     const css = styles[0]?.textContent ?? "";
     expect(css).toContain("1500ms");
-    expect(css).toContain("border-radius:.5em");
-    expect(css).toContain("outline-offset:2px");
+    expect(css).toContain("border-radius: 0.5em");
+    expect(css).toContain("outline-offset: 2px");
     expect(css).toContain("44px");
-    expect(css).toContain("forced-colors:active");
+    expect(css).toContain("forced-colors: active");
     expect(css).toContain("Highlight");
+  });
+
+  it("does not start a hold from a non-primary button", () => {
+    const { onConfirm, button } = renderButton();
+
+    point("pointerDown", button, { button: 2, buttons: 2 });
+    expect(button).toHaveAttribute("data-state", "idle");
+    advance(1500);
+    expect(onConfirm).not.toHaveBeenCalled();
+  });
+
+  it("uses aria-label as the accessible name", () => {
+    render(
+      <HoldButton aria-label="Delete the project" onConfirm={() => {}}>
+        Hold to delete
+      </HoldButton>,
+    );
+    const button = screen.getByRole("button", { name: "Delete the project" });
+
+    expect(button).not.toHaveAttribute("aria-labelledby");
+  });
+
+  it("preserves a caller-supplied aria-labelledby", () => {
+    render(
+      <>
+        <span id="name">Delete the project</span>
+        <HoldButton aria-labelledby="name" onConfirm={() => {}}>
+          Hold to delete
+        </HoldButton>
+      </>,
+    );
+    const button = screen.getByRole("button", { name: "Delete the project" });
+
+    expect(button).toHaveAttribute("aria-labelledby", "name");
+  });
+
+  it("bubbles a short press and swallows the click after confirm", () => {
+    const parentClick = vi.fn();
+    const onConfirm = vi.fn();
+    render(
+      // The parent is the surface under test, not a control.
+      // biome-ignore lint/a11y/noStaticElementInteractions: parent click is the behavior under test
+      // biome-ignore lint/a11y/useKeyWithClickEvents: parent click is the behavior under test
+      <div onClick={parentClick}>
+        <HoldButton onConfirm={onConfirm}>Hold to delete</HoldButton>
+      </div>,
+    );
+    const button = screen.getByRole("button", { name: "Hold to delete" });
+
+    point("pointerDown", button);
+    advance(400);
+    point("pointerUp", button);
+    fireEvent.click(button);
+    expect(parentClick).toHaveBeenCalledOnce();
+    expect(onConfirm).not.toHaveBeenCalled();
+
+    parentClick.mockClear();
+    point("pointerDown", button);
+    advance(1500);
+    expect(onConfirm).toHaveBeenCalledOnce();
+    point("pointerUp", button);
+    fireEvent.click(button);
+    expect(parentClick).not.toHaveBeenCalled();
   });
 
   it("blocks the context menu while a hold is in progress", () => {

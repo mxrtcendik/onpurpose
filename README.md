@@ -1,6 +1,8 @@
 # onpurpose
 
-A button for actions you should not be able to do by accident. The action runs only if the hold finishes.
+A hold-to-confirm button for React. For delete, publish, revoke, send — anything you don't want on a misclick. Hold it for 1.5 seconds and the action runs. Let go early, or just click, and nothing happens.
+
+Docs: https://onpurpose.lagoonte-ltd.workers.dev
 
 ```tsx
 import { HoldButton } from "onpurpose";
@@ -14,11 +16,21 @@ import { HoldButton } from "onpurpose";
 npm install onpurpose
 ```
 
-React 18.3 or 19. No provider, and no stylesheet to import.
+React 18.3 and 19. No provider, and no stylesheet to import. It picks up the font and color of the page it's on.
 
-## Examples
+## Use it
 
-Children can be a function of the state: `idle`, `holding`, or `confirmed`.
+### 1. Pass the action
+
+`onConfirm` runs once, at the end of the hold. The words inside the button are the label. `type` is `"button"`, so it won't submit a form you drop it into.
+
+The hold is 1.5 seconds, and that time isn't a prop. The fill crosses the button over those same 1.5 seconds, so you can see how close you are. Let go and it eases back over 200ms. `onConfirm` doesn't run. While you're pressing, the button scales to `0.97`.
+
+`onConfirm` returns right away. If the work is a request, the button is idle again while that request is still going, and someone can hold it a second time. Disable it yourself until the request finishes.
+
+### 2. Change the label as the hold progresses
+
+`children` can be a function when the words should change as you hold. It receives `"idle"`, `"holding"`, or `"confirmed"`.
 
 ```tsx
 <HoldButton onConfirm={() => publish()}>
@@ -26,7 +38,16 @@ Children can be a function of the state: `idle`, `holding`, or `confirmed`.
 </HoldButton>;
 ```
 
-`--hold-fill` is the progress wash. `--hold-confirmed` is the solid color after the hold completes. Color and font are inherited. The radius is `0.5em` unless a class replaces it.
+`confirmed` stays while you're still holding, then for a moment after you let go, and the button returns to `idle`.
+
+### 3. Restyle with CSS
+
+Font and color come from the page, so light and dark usually just work. Two custom properties cover the hold itself:
+
+- `--hold-fill` is the wash that reveals the progress. The default is the current text color mixed to 16% opacity.
+- `--hold-confirmed` is the solid color once the hold completes. The default is the current text color, and the label switches to the page background.
+
+The corner radius is `0.5em` until a class replaces it.
 
 ```css
 .send {
@@ -42,61 +63,77 @@ Children can be a function of the state: `idle`, `holding`, or `confirmed`.
 </HoldButton>;
 ```
 
-Pass utilities through `className`. The component's styles sit in `@layer hold-button`, so those classes win.
+`className` goes on the button. The built-in CSS sits in `@layer hold-button`, so your classes win, Tailwind included.
 
 ```tsx
 <HoldButton
-  className="rounded-full font-medium text-red-700 dark:text-red-300"
+  className="rounded-full text-red-700 dark:text-red-300"
   onConfirm={() => revokeAccess()}
 >
   Hold to revoke
 </HoldButton>;
 ```
 
-`data-state` is `idle`, `holding`, or `confirmed`.
+`data-state` is `"idle"`, `"holding"`, or `"confirmed"` if you want to style each phase yourself. `data-disabled` is set while the button is disabled.
+
+Put the button at the end of the row it will destroy. A click on that row can still do something else, like open the project. A finished hold does not.
+
+```tsx
+<div className="row" onClick={openProject}>
+  <div>
+    <p>Northwind</p>
+    <p>12 files, shared with 4 people</p>
+  </div>
+  <HoldButton onConfirm={removeProject}>Remove Northwind</HoldButton>
+</div>;
+```
+
+### 4. Keep your own event handlers
+
+Other button props are passed through. `onClick` isn't one of them, since a click isn't the action.
+
+If you pass `onPointerDown`, `onKeyDown`, or another handler the button uses, yours runs first. Call `preventDefault` and the hold never starts. A `ref` points at the real `<button>`.
 
 ## What it handles
 
-Pointer:
+### Pointer
 
-- Only the primary pointer can start a hold. A second finger is ignored, including its release.
-- The pointer is captured, so a release is still received if it lands outside the button.
-- Dragging off the button cancels the hold. Dragging back does not resume it. Releasing outside never confirms.
-- A cancelled pointer, or losing pointer capture, cancels the hold.
-- On touch, the long-press callout, text selection, and magnifier stay off during the hold.
-- A scroll that carries the button off the pointer cancels the hold.
+- Only the main pointer starts a hold: left click, or one finger. A second finger is ignored, even when it lifts.
+- The pointer is captured, so letting go still registers if your finger has slid off the button.
+- Drag off the button and the hold cancels. Sliding back on does not resume it, and releasing outside never confirms.
+- If the pointer is cancelled, or something else takes over the pointer, the hold cancels.
+- On a phone, the long-press menu, text selection, and magnifier stay out of the way while you hold.
+- Scroll the button out from under your finger and the hold cancels.
 
-Keyboard:
+### Keyboard
 
-- Space and Enter hold. Key repeat is ignored. Only the key that started the hold can end it.
+- Hold Space or Enter. A key that is already down won't start the timer again, and releasing a different key won't stop it.
 
-Page:
+### Page
 
-- Blur, the window losing focus, or the tab being hidden cancels an in-progress hold.
-- `disabled` cancels a hold and cannot start one.
-- Handlers you pass run first. If they call `preventDefault`, the hold does not start.
-- A short press still fires a click. That click does not confirm, and it bubbles.
-- `type` defaults to `button`, so the hold does not submit a form.
-- Unmounting during a hold clears the timer. `onConfirm` does not run after the button is gone.
-- The hold takes 1.5 seconds. The fill moves linearly across that same time. Letting go early retracts it, and nothing runs.
-- After confirming, the button stays inverted while you are still holding, then for a moment after you let go.
-- Reduced motion removes the press scale and makes the retract instant. The fill still moves, and the confirmed colors stay.
+- Tab away, switch windows, or hide the tab, and an unfinished hold cancels. It won't finish in the background.
+- `disabled` stops a hold that's already going, and a disabled button can't start one.
+- A short press still clicks, and that click bubbles. It does not confirm. After a finished hold, letting go doesn't click, so a parent handler won't run as well.
+- If the button unmounts mid-hold, the timer is cleared. `onConfirm` does not run after it's gone.
+- With reduced motion, the button doesn't shrink and an early release snaps back. The fill still moves, because that's how you can tell the hold is working.
 
 ## Accessibility
 
-It is a real button, with a visible focus ring. The accessible name is the visible label. A hidden description, "Press and hold to confirm", is attached with `aria-describedby`. If you pass your own `aria-describedby`, your ids come first. When the hold completes, a polite live region says "Confirmed".
+It's a normal `<button>`, with a focus ring you can see. The name is the label. Pass `aria-label` or `aria-labelledby` if the name should be something else. A hidden note, "Press and hold to confirm", is attached with `aria-describedby`. Pass your own and your ids come first. When the hold finishes, a live region says "Confirmed". That note, and the word "Confirmed", are English. There isn't a prop to change them.
 
-On a coarse pointer the hit area grows until it is at least 44px tall. The visual size of the button stays the same.
+On a touch screen the tappable area is at least 44px tall. The button doesn't grow to get there.
 
-In forced colors the fill and the confirmed state use `Highlight`, so the progress stays visible when a translucent wash would disappear. Stronger contrast also deepens the fill.
+A faint wash can disappear in forced colors, so the fill and the confirmed state use `Highlight`. If the person has asked for more contrast, the fill gets stronger too.
 
-A plain screen reader activate is a click, not a 1.5 second hold. This button does not confirm on that click. Space or Enter confirm only when those keys actually reach the page. A tap still cannot delete anything.
+Screen readers activate a button with a click. They don't hold it for 1.5 seconds, and this button won't treat that click as a confirm. A double-tap can't delete anything. Space and Enter only confirm when those keys actually reach the page.
 
-- macOS VoiceOver: VO+Space clicks, so it does not confirm. A physical key held down can still send key events in Safari, and those do confirm.
-- iOS VoiceOver and TalkBack: a double-tap fires a click or a short tap. It does not confirm.
-- NVDA and JAWS in browse mode: Enter usually arrives as a click, not a key. On Chrome that click cannot be distinguished from a real mouse click, so it does not confirm. Pass-through can deliver a real key hold, which does confirm.
+- macOS VoiceOver: VO+Space is a click, so it doesn't confirm. Holding a real key can still get through in Safari, and that does.
+- iOS VoiceOver and TalkBack: a double-tap is a click or a short tap. It doesn't confirm.
+- NVDA and JAWS in browse mode: Enter usually arrives as a click, not a held key. Chrome can't tell that click from a mouse click, so it doesn't confirm. Pass-through mode can send a real key hold, and that does.
 
 ## Development
+
+The repo is a pnpm workspace. The component lives in `packages/onpurpose`. The docs site lives in `apps/docs`.
 
 ```sh
 pnpm install
@@ -108,9 +145,12 @@ pnpm test:e2e
 pnpm build
 pnpm size
 pnpm publint
+pnpm attw
 ```
 
-`pnpm test` is the unit suite. `pnpm test:e2e` runs the browser checks against the docs page. Releasing is `changeset` plus the Release workflow. It publishes with npm provenance once the package has a trusted publisher on npm. Do not publish by hand from a laptop.
+`pnpm dev` starts the docs site. `pnpm test` is the unit suite. `pnpm test:e2e` runs the browser checks against that page. `pnpm size` enforces the gzip budget. `pnpm publint` and `pnpm attw` check the package that gets published.
+
+Releases go out through Changesets and the Release workflow. That workflow publishes with npm provenance once the package has a trusted publisher on npm.
 
 ## License
 
