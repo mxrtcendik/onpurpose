@@ -1,5 +1,11 @@
 # onpurpose
 
+## 0.2.1
+
+### Patch Changes
+
+- 772da32: Point the package homepage at onpurpose.cendik.dev.
+
 ## 0.2.0
 
 ### Minor Changes
