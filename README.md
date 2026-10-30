@@ -2,7 +2,7 @@
 
 A hold-to-confirm button for React. For delete, publish, revoke, send — anything you don't want on a misclick. Hold it for 1.5 seconds and the action runs. Let go early, or just click, and nothing happens.
 
-Docs: https://onpurpose.lagoonte-ltd.workers.dev
+Docs: https://onpurpose.cendik.dev/
 
 ```tsx
 import { HoldButton } from "onpurpose";
