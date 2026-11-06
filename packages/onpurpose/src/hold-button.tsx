@@ -12,7 +12,7 @@ export type HoldButtonMessages = {
 };
 
 export type HoldButtonProps = Omit<ComponentPropsWithRef<"button">, "children" | "onClick"> & {
-  onConfirm: () => void | PromiseLike<unknown>;
+  onConfirm: () => unknown;
   children: ReactNode | ((state: HoldButtonState, info: { busy: boolean }) => ReactNode);
   messages?: HoldButtonMessages;
 };

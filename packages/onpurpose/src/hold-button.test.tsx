@@ -482,6 +482,16 @@ describe("HoldButton", () => {
     expect(second).toHaveBeenCalledOnce();
   });
 
+  it("accepts an onConfirm that returns anything", () => {
+    const removed: string[] = [];
+    render(<HoldButton onConfirm={() => removed.push("project")}>Hold to delete</HoldButton>);
+    const button = screen.getByRole("button");
+    point("pointerDown", button);
+    advance(1500);
+    expect(removed).toEqual(["project"]);
+    expect(button).not.toHaveAttribute("aria-busy");
+  });
+
   it("forwards the ref to the button", () => {
     const ref = createRef<HTMLButtonElement>();
     render(
