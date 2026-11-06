@@ -133,22 +133,22 @@ Screen readers activate a button with a click. They don't hold it for 1.5 second
 
 ## Development
 
-The repo is a pnpm workspace. The component lives in `packages/onpurpose`. The docs site lives in `apps/docs`.
+The repo is a bun workspace. The component lives in `packages/onpurpose`. The docs site lives in `apps/docs`.
 
 ```sh
-pnpm install
-pnpm dev
-pnpm lint
-pnpm typecheck
-pnpm test
-pnpm test:e2e
-pnpm build
-pnpm size
-pnpm publint
-pnpm attw
+bun install
+bun run dev
+bun run lint
+bun run typecheck
+bun run test
+bun run test:e2e
+bun run build
+bun run size
+bun run publint
+bun run attw
 ```
 
-`pnpm dev` starts the docs site. `pnpm test` is the unit suite. `pnpm test:e2e` runs the browser checks against that page. `pnpm size` enforces the gzip budget. `pnpm publint` and `pnpm attw` check the package that gets published.
+`bun run dev` starts the docs site. `bun run test` is the unit suite. `bun run test:e2e` runs the browser checks against that page. `bun run size` enforces the gzip budget. `bun run publint` and `bun run attw` check the package that gets published.
 
 Releases go out through Changesets and the Release workflow. That workflow publishes with npm provenance once the package has a trusted publisher on npm.
 
