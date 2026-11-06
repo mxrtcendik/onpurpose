@@ -32,7 +32,7 @@
     },
     "packages/onpurpose": {
       "name": "onpurpose",
-      "version": "0.2.1",
+      "version": "0.3.0",
       "devDependencies": {
         "@arethetypeswrong/cli": "0.18.5",
         "@size-limit/preset-small-lib": "14.3.0",
