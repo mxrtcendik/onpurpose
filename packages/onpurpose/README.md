@@ -63,7 +63,7 @@ The corner radius is `0.5em` until a class replaces it.
 </HoldButton>;
 ```
 
-`className` goes on the button. The built-in CSS sits in `@layer hold-button`, so your classes win, Tailwind included.
+`className` goes on the button. The built-in CSS sits in `@layer components` (as `components.hold-button`), the same layer Tailwind uses for components. Your classes and Tailwind utilities win, and Tailwind's reset doesn't flatten the button.
 
 ```tsx
 <HoldButton

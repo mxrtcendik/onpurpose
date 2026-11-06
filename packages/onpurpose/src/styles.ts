@@ -9,7 +9,9 @@ const EASE = "cubic-bezier(0.23, 1, 0.32, 1)";
 const STYLE_ID = "onpurpose";
 
 const CSS = `
-@layer hold-button {
+@layer theme, base, components, utilities;
+
+@layer components.hold-button {
   .onpurpose {
     --e: ${EASE};
     --r: ${RETRACT_MS}ms;

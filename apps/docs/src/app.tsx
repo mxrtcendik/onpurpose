@@ -237,8 +237,10 @@ export function App() {
           <li className="step">
             <h3>Use your own classes</h3>
             <p>
-              <code>className</code> goes on the button. The built-in CSS sits in a layer called{" "}
-              <code>hold-button</code>, so your classes win. Tailwind works the same way.
+              <code>className</code> goes on the button. The built-in CSS sits in{" "}
+              <code>@layer components</code>, the same layer Tailwind uses for components. Your
+              classes and Tailwind utilities win, and Tailwind's reset doesn't flatten the button.
+              This example is real Tailwind.
             </p>
             <Figure code={tailwindCode}>
               <HoldButton

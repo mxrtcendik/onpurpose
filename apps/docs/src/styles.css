@@ -1,3 +1,5 @@
+@import "tailwindcss";
+
 @font-face {
   font-family: Geist;
   font-style: normal;
@@ -15,8 +17,6 @@
   src: url("../node_modules/@fontsource-variable/geist-mono/files/geist-mono-latin-wght-normal.woff2")
     format("woff2");
 }
-
-@layer hold-button, utilities;
 
 :root {
   color-scheme: light dark;
@@ -65,6 +65,7 @@ p {
 
 a {
   color: inherit;
+  text-decoration: underline;
 }
 
 p {
@@ -315,24 +316,6 @@ p code,
   color: light-dark(#087443, #8dcfb0);
   --hold-fill: color-mix(in srgb, currentColor 28%, transparent);
   --hold-confirmed: light-dark(#087443, #8dcfb0);
-}
-
-@layer utilities {
-  .rounded-full {
-    border-radius: 999px;
-  }
-
-  .text-red-700 {
-    color: #b91c1c;
-  }
-}
-
-@media (prefers-color-scheme: dark) {
-  @layer utilities {
-    .dark\:text-red-300 {
-      color: #fca5a5;
-    }
-  }
 }
 
 @media (max-width: 720px) {

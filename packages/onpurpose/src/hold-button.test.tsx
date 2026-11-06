@@ -424,7 +424,8 @@ describe("HoldButton", () => {
 
     const styles = document.querySelectorAll("#onpurpose");
     expect(styles).toHaveLength(1);
-    expect(styles[0]?.textContent).toContain("@layer hold-button");
+    expect(styles[0]?.textContent).toMatch(/^@layer theme, base, components, utilities;/);
+    expect(styles[0]?.textContent).toContain("@layer components.hold-button");
     expect(styles[0]?.textContent).toContain("--hold-fill");
     expect(styles[0]?.textContent).toContain("--hold-confirmed");
     expect(styles[0]?.textContent).toContain(".onpurpose");

@@ -177,6 +177,40 @@ test("only clip-path, transform, and opacity animate", async ({ page }) => {
   for (const property of retracting) expect(ALLOWED).toContain(property);
 });
 
+test("Tailwind utilities win and its reset doesn't flatten the button", async ({ page }) => {
+  const read = () =>
+    page.evaluate(() => {
+      const buttons = [...document.querySelectorAll("button")];
+      const revoke = buttons.find((b) => b.textContent?.startsWith("Hold to revoke"));
+      const plain = buttons.find((b) => b.textContent?.startsWith("Hold to delete"));
+      const frame = plain?.querySelector(".onpurpose-frame");
+      if (!revoke || !plain || !frame) throw new Error("Missing buttons");
+      return {
+        revokeRadius: Number.parseFloat(getComputedStyle(revoke).borderTopLeftRadius),
+        revokeColor: getComputedStyle(revoke).color,
+        plainColor: getComputedStyle(plain).color,
+        plainRadius: getComputedStyle(plain).borderTopLeftRadius,
+        framePadding: getComputedStyle(frame).paddingTop,
+        frameBorder: getComputedStyle(frame).borderTopWidth,
+      };
+    });
+
+  for (const order of ["after", "before"] as const) {
+    if (order === "before") {
+      await page.evaluate(() => {
+        const ours = document.getElementById("onpurpose");
+        if (ours) document.head.prepend(ours);
+      });
+    }
+    const styles = await read();
+    expect(styles.revokeRadius).toBeGreaterThan(1000);
+    expect(styles.revokeColor).not.toBe(styles.plainColor);
+    expect(styles.plainRadius).not.toBe("0px");
+    expect(styles.framePadding).not.toBe("0px");
+    expect(styles.frameBorder).toBe("1px");
+  }
+});
+
 test("keyboard hold confirms", async ({ page }) => {
   const hold = await button(page);
   await hold.focus();
