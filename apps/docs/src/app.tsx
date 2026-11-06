@@ -1,153 +1,19 @@
 import { HoldButton, type HoldButtonState } from "onpurpose";
-import { type ReactNode, useEffect, useState } from "react";
-
-const usage = `import { HoldButton } from "onpurpose";
-
-<HoldButton onConfirm={() => deleteProject()}>
-  Hold to delete
-</HoldButton>`;
-
-const install = "npm install onpurpose";
-
-const labelCode = `<HoldButton onConfirm={() => publish()}>
-  {(state) => (state === "confirmed" ? "Published" : "Hold to publish")}
-</HoldButton>`;
-
-const asyncCode = `<HoldButton onConfirm={() => archiveProject()}>
-  {(state, { busy }) =>
-    busy ? "Archiving…" : state === "confirmed" ? "Archived" : "Hold to archive"
-  }
-</HoldButton>`;
-
-const variablesCode = `.send {
-  color: light-dark(#087443, #8dcfb0);
-  --hold-fill: color-mix(in srgb, currentColor 28%, transparent);
-  --hold-confirmed: light-dark(#087443, #8dcfb0);
-}
-
-<HoldButton className="send" onConfirm={() => send()}>
-  Hold to send
-</HoldButton>`;
-
-const tailwindCode = `<HoldButton
-  className="rounded-full text-red-700 dark:text-red-300"
-  onConfirm={() => revokeAccess()}>
-  Hold to revoke
-</HoldButton>`;
-
-const messagesCode = `<HoldButton
-  messages={{
-    hint: "Mantén pulsado para confirmar",
-    confirmed: "Eliminado",
-    again: "Actívalo otra vez para confirmar",
-  }}
-  onConfirm={() => deleteProject()}
->
-  Mantén para eliminar
-</HoldButton>`;
-
-const rowCode = `<div className="row" onClick={openProject}>
-  <div>
-    <p>Northwind</p>
-    <p>12 files, shared with 4 people</p>
-  </div>
-  <HoldButton onConfirm={removeProject}>Remove Northwind</HoldButton>
-</div>`;
-
-const handled = [
-  {
-    title: "Pointer",
-    items: [
-      "Only the main pointer starts a hold: left click, or one finger. A second finger is ignored, even when it lifts.",
-      "The pointer is captured, so letting go still registers if your finger has slid off the button.",
-      "Drag off the button and the hold cancels. Sliding back on does not resume it, and releasing outside never confirms.",
-      "A finger gets a few pixels of slack, and the whole 44px touch area counts as the button, so a steady thumb near the edge doesn't cancel.",
-      "If the pointer is cancelled, or something else takes over the pointer, the hold cancels.",
-      "On a phone, the long-press menu, text selection, and magnifier stay out of the way while you hold.",
-      "Scroll the button out from under your finger and the hold cancels.",
-      "On Android, a touch hold that confirms gives a short buzz. iPhones don't let the web do that.",
-    ],
-  },
-  {
-    title: "Keyboard",
-    items: [
-      "Hold Space or Enter. A key that is already down won't start the timer again, and releasing a different key won't stop it.",
-      "Escape cancels a hold, whether it's a key or a pointer, and letting go of the key afterwards does nothing.",
-      "Shortcuts like Ctrl+Enter or Cmd+Enter don't start a hold, and don't click the button either.",
-      "A mouse hold keeps going when Safari takes focus off the button as you press it. Only a keyboard hold cancels when focus leaves.",
-    ],
-  },
-  {
-    title: "Page",
-    items: [
-      "Tab away, switch windows, or hide the tab, and an unfinished hold cancels. It won't finish in the background.",
-      "disabled stops a hold that's already going, and a disabled button can't start one.",
-      "Handlers you pass run first. Call preventDefault and the hold never starts.",
-      "A short press still clicks, and that click bubbles. It does not confirm. After a finished hold, letting go doesn't click, so no listener above it runs as well, React or not.",
-      "Return a promise from onConfirm and a second hold can't start until it settles.",
-      'It never submits or resets its form, even with type="submit". A quick click can\'t send the form.',
-      "If the button unmounts mid-hold, the timer is cleared. onConfirm does not run after it's gone.",
-      "With reduced motion, the button doesn't shrink and an early release snaps back. The fill still moves, because that's how you can tell the hold is working.",
-    ],
-  },
-];
-
-function SyncState({
-  state,
-  onChange,
-  children,
-}: {
-  state: HoldButtonState;
-  onChange: (state: HoldButtonState) => void;
-  children: ReactNode;
-}) {
-  useEffect(() => {
-    onChange(state);
-  }, [state, onChange]);
-
-  return children;
-}
-
-function ProjectRow() {
-  const [opened, setOpened] = useState(false);
-  const [removed, setRemoved] = useState(false);
-
-  return (
-    // biome-ignore lint/a11y/noStaticElementInteractions: row receives the bubbled click
-    // biome-ignore lint/a11y/useKeyWithClickEvents: the remove button is the keyboard control
-    <div
-      className="row"
-      onClick={() => {
-        if (!removed) setOpened(true);
-      }}
-    >
-      <div>
-        <p className="row-title">Northwind</p>
-        <p className="row-meta">
-          {removed
-            ? "Removed. The row didn't open."
-            : opened
-              ? "Opened. A short click still hits the row."
-              : "12 files, shared with 4 people"}
-        </p>
-      </div>
-      <HoldButton disabled={removed} onConfirm={() => setRemoved(true)}>
-        {(state) => (removed || state === "confirmed" ? "Removed" : "Remove Northwind")}
-      </HoldButton>
-    </div>
-  );
-}
-
-function Figure({ code, children }: { code: string; children: ReactNode }) {
-  return (
-    <div className="figure">
-      <div className="figure-demo">{children}</div>
-      <pre>
-        <code>{code}</code>
-      </pre>
-    </div>
-  );
-}
+import { useState } from "react";
+import { Figure } from "./components/figure";
+import { ProjectRow } from "./components/project-row";
+import { SyncState } from "./components/sync-state";
+import {
+  asyncCode,
+  install,
+  labelCode,
+  messagesCode,
+  rowCode,
+  tailwindCode,
+  usage,
+  variablesCode,
+} from "./examples";
+import { handled } from "./handled";
 
 export function App() {
   const [confirmed, setConfirmed] = useState(0);
