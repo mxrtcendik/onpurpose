@@ -257,6 +257,16 @@ test("Tailwind utilities win and its reset doesn't flatten the button", async ({
   }
 });
 
+test("a mouse hold on a focused button confirms", async ({ page }) => {
+  const hold = await button(page);
+  await hold.focus();
+  await press(page, hold);
+  await expect(hold).toHaveAttribute("data-state", "holding");
+  await expect(hold).toHaveAttribute("data-state", "confirmed", { timeout: 3_000 });
+  await page.mouse.up();
+  await expect(page.getByTestId("confirms")).toHaveAttribute("data-count", "1");
+});
+
 test("keyboard hold confirms", async ({ page }) => {
   const hold = await button(page);
   await hold.focus();

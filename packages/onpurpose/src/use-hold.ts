@@ -315,7 +315,7 @@ export function useHoldButton({
   const onBlur = (event: FocusEvent<HTMLButtonElement>) => {
     if (event.currentTarget.contains(event.relatedTarget)) return;
     disarm();
-    endGesture();
+    if (gestureRef.current?.kind === "key") endGesture();
   };
 
   const onContextMenu = (event: MouseEvent<HTMLButtonElement>) => {

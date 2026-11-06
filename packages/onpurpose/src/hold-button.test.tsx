@@ -279,6 +279,17 @@ describe("HoldButton", () => {
     expect(onConfirm).toHaveBeenCalledOnce();
   });
 
+  it("keeps a pointer hold when the button blurs, as Safari does on press", () => {
+    const { onConfirm, button } = renderButton();
+    button.focus();
+
+    point("pointerDown", button);
+    fireEvent.blur(button);
+    expect(button).toHaveAttribute("data-state", "holding");
+    advance(1500);
+    expect(onConfirm).toHaveBeenCalledOnce();
+  });
+
   it("does not release a Space hold when Enter is released", () => {
     const { onConfirm, button } = renderButton();
 
