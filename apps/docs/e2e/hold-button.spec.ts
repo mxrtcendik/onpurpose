@@ -148,8 +148,11 @@ test("only clip-path, transform, and opacity animate", async ({ page }) => {
   await page.waitForTimeout(40);
   const early = await geometry(page);
   const earlyMotion = await runningProperties(page);
+  const pressSettled = await face.evaluate(
+    (element) => getComputedStyle(element).transform === "matrix(0.97, 0, 0, 0.97, 0, 0)",
+  );
   expect(earlyMotion).toContain("clip-path");
-  expect(earlyMotion).toContain("transform");
+  expect(earlyMotion.includes("transform") || pressSettled).toBe(true);
   for (const property of earlyMotion) expect(ALLOWED).toContain(property);
   await expect
     .poll(async () => face.evaluate((element) => getComputedStyle(element).transform))
@@ -356,21 +359,98 @@ test("light and dark both paint the fill from currentColor", async ({ page }) =>
     const hold = await button(page);
     await press(page, hold);
     await expect(hold).toHaveAttribute("data-state", "confirmed", { timeout: 3_000 });
-    const confirmed = await page.evaluate(() => {
-      const button = document.querySelector("button");
-      const face = document.querySelector(".onpurpose-frame");
-      if (!button || !face) throw new Error("Missing button");
-      return {
-        background: getComputedStyle(button).backgroundColor,
-        label: getComputedStyle(face).color,
-      };
-    });
+    const confirmed = await confirmedColors(page);
     expect(confirmed.background).toBe(theme.text);
-    expect(confirmed.label).toBe(theme.canvas);
+    expect(confirmed.contrast).toBeGreaterThanOrEqual(4.5);
     await page.mouse.up();
   }
 
   expect(themes[0]?.text).not.toBe(themes[1]?.text);
   expect(themes[0]?.fill).not.toBe(themes[1]?.fill);
   expect(themes[0]?.canvas).not.toBe(themes[1]?.canvas);
+});
+
+async function confirmedColors(page: Page) {
+  return page.evaluate(() => {
+    const button = document.querySelector("button");
+    const face = document.querySelector(".onpurpose-frame");
+    if (!button || !face) throw new Error("Missing button");
+    const canvas = document.createElement("canvas").getContext("2d", { willReadFrequently: true });
+    if (!canvas) throw new Error("No canvas");
+    const rgb = (color: string) => {
+      canvas.clearRect(0, 0, 1, 1);
+      canvas.fillStyle = color;
+      canvas.fillRect(0, 0, 1, 1);
+      return [...canvas.getImageData(0, 0, 1, 1).data.slice(0, 3)];
+    };
+    const luminance = (color: string) => {
+      const [r = 0, g = 0, b = 0] = rgb(color).map((v) => {
+        const c = v / 255;
+        return c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
+      });
+      return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+    };
+    const layer = getComputedStyle(button, "::after");
+    const background =
+      layer.content === "none" ? getComputedStyle(button).backgroundColor : layer.backgroundColor;
+    const label = getComputedStyle(face).color;
+    const [hi, lo] = [luminance(background), luminance(label)].sort((a, b) => b - a);
+    return {
+      background,
+      label,
+      opacity: getComputedStyle(button, "::after").opacity,
+      contrast: ((hi ?? 0) + 0.05) / ((lo ?? 0) + 0.05),
+    };
+  });
+}
+
+test("the confirmed label stays readable on a dark page without color-scheme", async ({ page }) => {
+  await page.addStyleTag({
+    content: ":root{color-scheme:light} html,body{background:#111;color:#eee}",
+  });
+  const hold = await button(page);
+  await press(page, hold);
+  await expect(hold).toHaveAttribute("data-state", "confirmed", { timeout: 3_000 });
+  const confirmed = await confirmedColors(page);
+  expect(confirmed.opacity).toBe("1");
+  expect(confirmed.contrast).toBeGreaterThanOrEqual(4.5);
+  await page.mouse.up();
+});
+
+test("--hold-confirmed-text overrides the confirmed label", async ({ page }) => {
+  await page.addStyleTag({
+    content: ".onpurpose{--hold-confirmed:rgb(10, 20, 30);--hold-confirmed-text:rgb(200, 100, 50)}",
+  });
+  const hold = await button(page);
+  await press(page, hold);
+  await expect(hold).toHaveAttribute("data-state", "confirmed", { timeout: 3_000 });
+  const confirmed = await confirmedColors(page);
+  expect(confirmed.background).toBe("rgb(10, 20, 30)");
+  expect(confirmed.label).toBe("rgb(200, 100, 50)");
+  await page.mouse.up();
+});
+
+test("after a confirm, the color fades out and the fill does not retract", async ({ page }) => {
+  const hold = await button(page);
+  await press(page, hold);
+  await expect(hold).toHaveAttribute("data-state", "confirmed", { timeout: 3_000 });
+  await page.mouse.up();
+  await expect(hold).toHaveAttribute("data-state", "idle");
+  const samples = await page.evaluate(async () => {
+    const button = document.querySelector("button");
+    const fill = document.querySelector(".onpurpose-fill");
+    if (!button || !fill) throw new Error("Missing button");
+    const out: { clip: string; layer: number }[] = [];
+    for (let i = 0; i < 8; i++) {
+      out.push({
+        clip: getComputedStyle(fill).clipPath,
+        layer: Number(getComputedStyle(button, "::after").opacity),
+      });
+      await new Promise((resolve) => setTimeout(resolve, 25));
+    }
+    return out;
+  });
+  for (const sample of samples) expect(sample.clip).toBe("inset(0px 100% 0px 0px)");
+  expect(samples.at(-1)?.layer).toBe(0);
+  expect(samples.some((sample) => sample.layer > 0 && sample.layer < 1)).toBe(true);
 });

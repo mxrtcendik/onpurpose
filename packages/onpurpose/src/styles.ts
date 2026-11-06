@@ -27,6 +27,24 @@ const CSS = `
     touch-action: manipulation;
     user-select: none;
     -webkit-touch-callout: none;
+    isolation: isolate;
+  }
+
+  .onpurpose::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    border-radius: inherit;
+    background: var(--hold-confirmed, currentColor);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity var(--r) var(--e);
+  }
+
+  .onpurpose[data-state="confirmed"]::after {
+    opacity: 1;
+    transition: none;
   }
 
   .onpurpose:disabled {
@@ -56,14 +74,18 @@ const CSS = `
     transform: scale(0.97);
   }
 
-  .onpurpose[data-state="confirmed"] {
-    background: var(--hold-confirmed, currentColor);
+  .onpurpose[data-state="confirmed"] .onpurpose-frame {
+    color: var(--hold-confirmed-text, Canvas);
+    border-color: transparent;
   }
 
-  .onpurpose[data-state="confirmed"] .onpurpose-frame {
-    color: Canvas;
-    background: 0;
-    border-color: transparent;
+  @supports (color: oklch(from red l c h)) {
+    .onpurpose[data-state="confirmed"] .onpurpose-frame {
+      color: var(
+        --hold-confirmed-text,
+        oklch(from var(--hold-confirmed, currentColor) clamp(0, (0.6 - l) * 1000, 1) 0 0)
+      );
+    }
   }
 
   .onpurpose-fill {
@@ -125,7 +147,7 @@ const CSS = `
       background: Highlight;
     }
 
-    .onpurpose[data-state="confirmed"] {
+    .onpurpose::after {
       background: Highlight;
     }
 

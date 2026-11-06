@@ -42,10 +42,11 @@ The hold is 1.5 seconds, and that time isn't a prop. The fill crosses the button
 
 ### 3. Restyle with CSS
 
-Font and color come from the page, so light and dark usually just work. Two custom properties cover the hold itself:
+Font and color come from the page, so light and dark usually just work. Three custom properties cover the hold itself:
 
 - `--hold-fill` is the wash that reveals the progress. The default is the current text color mixed to 16% opacity.
-- `--hold-confirmed` is the solid color once the hold completes. The default is the current text color, and the label switches to the page background.
+- `--hold-confirmed` is the solid color once the hold completes. The default is the current text color. When you let go, it fades out.
+- `--hold-confirmed-text` is the label color on top of it. By default the label turns white or black, whichever is easier to read on `--hold-confirmed`. Browsers without relative colors use the page background (`Canvas`).
 
 The corner radius is `0.5em` until a class replaces it.
 

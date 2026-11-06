@@ -213,8 +213,9 @@ export function App() {
             <p>
               Font and color come from the page, so light and dark usually just work.{" "}
               <code>--hold-fill</code> is the wash that tracks the hold.{" "}
-              <code>--hold-confirmed</code> is the solid color at the end. Corners are 0.5em until a
-              class changes them.
+              <code>--hold-confirmed</code> is the solid color at the end, and the label on it turns
+              white or black, whichever reads. <code>--hold-confirmed-text</code> sets that label
+              color yourself. Corners are 0.5em until a class changes them.
             </p>
             <p>
               <code>data-state</code> is idle, holding, or confirmed, if you want to style each

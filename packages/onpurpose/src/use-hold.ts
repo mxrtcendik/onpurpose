@@ -161,9 +161,14 @@ export function useHoldButton({
     }, HOLD_MS);
   };
 
+  const shownPhaseRef = useRef<HoldButtonState>("idle");
+
   useIsoLayoutEffect(() => {
     const fill = fillRef.current;
-    if (phase !== "holding" || !fill) return;
+    const previous = shownPhaseRef.current;
+    shownPhaseRef.current = phase;
+    const reset = phase === "holding" || (phase === "idle" && previous === "confirmed");
+    if (!reset || !fill) return;
     fill.style.cssText = "transition:none;clip-path:inset(0 100% 0 0)";
     void fill.offsetWidth;
     fill.style.cssText = "";
