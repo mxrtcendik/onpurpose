@@ -308,6 +308,7 @@ test("keyboard hold confirms", async ({ page }) => {
 const pixel7 = devices["Pixel 7"];
 
 test.describe("touch", () => {
+  test.skip(({ browserName }) => browserName !== "chromium", "Touch is driven through CDP");
   test.use({
     viewport: pixel7.viewport,
     userAgent: pixel7.userAgent,

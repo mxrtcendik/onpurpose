@@ -1,5 +1,12 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
-import { act, createRef, type PointerEvent as ReactPointerEvent, useState } from "react";
+import {
+  act,
+  createRef,
+  type PointerEvent as ReactPointerEvent,
+  StrictMode,
+  useState,
+  version,
+} from "react";
 import { hydrateRoot } from "react-dom/client";
 import { renderToString } from "react-dom/server";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -754,6 +761,47 @@ describe("HoldButton", () => {
       </HoldButton>,
     );
     expect(screen.getByRole("button")).toHaveAccessibleDescription("Press and hold to confirm");
+  });
+
+  it("works under StrictMode: one confirm, one stylesheet, clean unmount", () => {
+    const onConfirm = vi.fn();
+    const { unmount } = render(
+      <StrictMode>
+        <HoldButton onConfirm={onConfirm}>Hold to delete</HoldButton>
+      </StrictMode>,
+    );
+    const button = screen.getByRole("button", { name: "Hold to delete" });
+
+    point("pointerDown", button);
+    advance(1500);
+    expect(onConfirm).toHaveBeenCalledOnce();
+    point("pointerUp", button);
+    fireEvent.click(button);
+    advance(2000);
+    fireEvent.click(button);
+    expect(onConfirm).toHaveBeenCalledOnce();
+    fireEvent.click(button);
+    expect(onConfirm).toHaveBeenCalledTimes(2);
+    expect(ourStyles()).toHaveLength(1);
+    advance(1000);
+
+    point("pointerDown", button);
+    unmount();
+    advance(3000);
+    expect(onConfirm).toHaveBeenCalledTimes(2);
+  });
+
+  it("delivers styles the way this React version supports", () => {
+    render(<HoldButton onConfirm={() => {}}>One</HoldButton>);
+    const injected = document.querySelectorAll("style[data-onpurpose]");
+    const hoisted = document.querySelectorAll('style[data-href^="onpurpose-"]');
+    if (version.startsWith("18.")) {
+      expect(injected).toHaveLength(1);
+      expect(hoisted).toHaveLength(0);
+    } else {
+      expect(injected).toHaveLength(0);
+      expect(hoisted).toHaveLength(1);
+    }
   });
 
   it("injects one shared stylesheet", () => {
