@@ -563,22 +563,26 @@ test("after a confirm, the color fades out and the fill does not retract", async
   const hold = await button(page);
   await press(page, hold);
   await expect(hold).toHaveAttribute("data-state", "confirmed", { timeout: 3_000 });
-  await page.mouse.up();
-  await expect(hold).toHaveAttribute("data-state", "idle");
-  const samples = await page.evaluate(async () => {
+  const recording = page.evaluate(async () => {
     const button = document.querySelector("button");
     const fill = document.querySelector(".onpurpose-fill");
     if (!button || !fill) throw new Error("Missing button");
     const out: { clip: string; layer: number }[] = [];
-    for (let i = 0; i < 8; i++) {
+    while (button.dataset.state !== "idle") {
+      await new Promise((resolve) => requestAnimationFrame(resolve));
+    }
+    const start = performance.now();
+    while (performance.now() - start < 400) {
       out.push({
         clip: getComputedStyle(fill).clipPath,
         layer: Number(getComputedStyle(button, "::after").opacity),
       });
-      await new Promise((resolve) => setTimeout(resolve, 25));
+      await new Promise((resolve) => requestAnimationFrame(resolve));
     }
     return out;
   });
+  await page.mouse.up();
+  const samples = await recording;
   for (const sample of samples) expect(sample.clip).toBe("inset(0px 100% 0px 0px)");
   expect(samples.at(-1)?.layer).toBe(0);
   expect(samples.some((sample) => sample.layer > 0 && sample.layer < 1)).toBe(true);
