@@ -1,6 +1,6 @@
 import type { ComponentPropsWithRef, ReactNode } from "react";
 import { forwardRef, type Ref, useCallback, useId, useRef } from "react";
-import { useHoldButtonStyles } from "./styles";
+import { HoldButtonStyles, SR_ONLY } from "./styles";
 import { type HoldButtonState, useHoldButton } from "./use-hold";
 
 export type { HoldButtonState };
@@ -55,8 +55,6 @@ export const HoldButton = forwardRef<HTMLButtonElement, HoldButtonProps>(functio
   },
   ref,
 ) {
-  useHoldButtonStyles();
-
   const hintId = useId();
   const labelId = useId();
   const forwardedRef = useRef(ref);
@@ -77,43 +75,48 @@ export const HoldButton = forwardRef<HTMLButtonElement, HoldButtonProps>(functio
   const labelledBy = ariaLabelledBy ?? (ariaLabel ? undefined : labelId);
 
   return (
-    <button
-      {...props}
-      ref={setButtonRef}
-      type={type}
-      className={className ? `onpurpose ${className}` : "onpurpose"}
-      disabled={disabled}
-      data-state={hold.phase}
-      data-disabled={disabled ? "" : undefined}
-      aria-label={ariaLabel}
-      aria-labelledby={labelledBy}
-      aria-describedby={describedBy}
-      onClick={hold.onClick}
-      onPointerDown={(event) => runUnlessPrevented(onPointerDown, event, hold.onPointerDown)}
-      onPointerMove={(event) => runUnlessPrevented(onPointerMove, event, hold.onPointerMove)}
-      onPointerUp={(event) => runUnlessPrevented(onPointerUp, event, hold.onPointerUp)}
-      onPointerCancel={(event) => runUnlessPrevented(onPointerCancel, event, hold.onPointerCancel)}
-      onLostPointerCapture={(event) =>
-        runUnlessPrevented(onLostPointerCapture, event, hold.onPointerCancel)
-      }
-      onKeyDown={(event) => runUnlessPrevented(onKeyDown, event, hold.onKeyDown)}
-      onKeyUp={(event) => runUnlessPrevented(onKeyUp, event, hold.onKeyUp)}
-      onBlur={(event) => runUnlessPrevented(onBlur, event, hold.onBlur)}
-      onContextMenu={(event) => runUnlessPrevented(onContextMenu, event, hold.onContextMenu)}
-    >
-      <span className="onpurpose-frame">
-        <span ref={hold.fillRef} className="onpurpose-fill" aria-hidden="true" />
-        <span id={labelId} className="onpurpose-label">
-          {label}
+    <>
+      <HoldButtonStyles />
+      <button
+        {...props}
+        ref={setButtonRef}
+        type={type}
+        className={className ? `onpurpose ${className}` : "onpurpose"}
+        disabled={disabled}
+        data-state={hold.phase}
+        data-disabled={disabled ? "" : undefined}
+        aria-label={ariaLabel}
+        aria-labelledby={labelledBy}
+        aria-describedby={describedBy}
+        onClick={hold.onClick}
+        onPointerDown={(event) => runUnlessPrevented(onPointerDown, event, hold.onPointerDown)}
+        onPointerMove={(event) => runUnlessPrevented(onPointerMove, event, hold.onPointerMove)}
+        onPointerUp={(event) => runUnlessPrevented(onPointerUp, event, hold.onPointerUp)}
+        onPointerCancel={(event) =>
+          runUnlessPrevented(onPointerCancel, event, hold.onPointerCancel)
+        }
+        onLostPointerCapture={(event) =>
+          runUnlessPrevented(onLostPointerCapture, event, hold.onPointerCancel)
+        }
+        onKeyDown={(event) => runUnlessPrevented(onKeyDown, event, hold.onKeyDown)}
+        onKeyUp={(event) => runUnlessPrevented(onKeyUp, event, hold.onKeyUp)}
+        onBlur={(event) => runUnlessPrevented(onBlur, event, hold.onBlur)}
+        onContextMenu={(event) => runUnlessPrevented(onContextMenu, event, hold.onContextMenu)}
+      >
+        <span className="onpurpose-frame">
+          <span ref={hold.fillRef} className="onpurpose-fill" aria-hidden="true" />
+          <span id={labelId} className="onpurpose-label">
+            {label}
+          </span>
         </span>
-      </span>
-      <span id={hintId} className="onpurpose-sr">
-        Press and hold to confirm
-      </span>
-      <span role="status" className="onpurpose-sr">
-        {hold.announcement}
-      </span>
-    </button>
+        <span id={hintId} className="onpurpose-sr" style={SR_ONLY}>
+          Press and hold to confirm
+        </span>
+        <span role="status" className="onpurpose-sr" style={SR_ONLY}>
+          {hold.announcement}
+        </span>
+      </button>
+    </>
   );
 });
 

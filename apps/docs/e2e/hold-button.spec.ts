@@ -111,7 +111,7 @@ test("a click does not confirm", async ({ page }) => {
 });
 
 test("only clip-path, transform, and opacity animate", async ({ page }) => {
-  const css = await page.locator("#onpurpose").textContent();
+  const css = await page.locator('style[data-href^="onpurpose-"]').textContent();
   expect(css).toBeTruthy();
   const declared = transitionProperties(css ?? "");
   expect(declared).toContain("clip-path");
@@ -201,7 +201,7 @@ test("Tailwind utilities win and its reset doesn't flatten the button", async ({
   for (const order of ["after", "before"] as const) {
     if (order === "before") {
       await page.evaluate(() => {
-        const ours = document.getElementById("onpurpose");
+        const ours = document.querySelector('style[data-href^="onpurpose-"]');
         if (ours) document.head.prepend(ours);
       });
     }

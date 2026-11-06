@@ -164,6 +164,12 @@ export function App() {
           React 18.3 and 19. No provider, and no stylesheet to import. It picks up the font and
           color of the page it's on.
         </p>
+        <p>
+          On React 19 its styles render with the page, so a server-rendered button (Next.js App
+          Router included) is styled before any JavaScript runs. On React 18 they're added when the
+          first button mounts, so a server-rendered button looks plain until then. Either way, the
+          hidden screen reader text never shows.
+        </p>
       </section>
 
       <section className="section">

@@ -1,4 +1,4 @@
-import { useInsertionEffect } from "react";
+import { type CSSProperties, useInsertionEffect, version } from "react";
 
 export const HOLD_MS = 1500;
 export const TARGET_PX = 44;
@@ -6,7 +6,6 @@ export const TARGET_PX = 44;
 const RETRACT_MS = 200;
 const PRESS_MS = 160;
 const EASE = "cubic-bezier(0.23, 1, 0.32, 1)";
-const STYLE_ID = "onpurpose";
 
 const CSS = `
 @layer theme, base, components, utilities;
@@ -107,15 +106,6 @@ const CSS = `
     transition: none;
   }
 
-  .onpurpose-sr {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    margin: -1px;
-    overflow: hidden;
-    clip-path: inset(50%);
-  }
-
   @media (pointer: coarse) {
     .onpurpose::before {
       content: "";
@@ -158,12 +148,40 @@ const CSS = `
 }
 `.trim();
 
-export function useHoldButtonStyles() {
+function hash(text: string) {
+  let value = 5381;
+  for (let i = 0; i < text.length; i++) value = (value * 33) ^ text.charCodeAt(i);
+  return (value >>> 0).toString(36);
+}
+
+export const STYLE_KEY = `onpurpose-${hash(CSS)}`;
+
+export const SR_ONLY: CSSProperties = {
+  position: "absolute",
+  width: 1,
+  height: 1,
+  margin: -1,
+  padding: 0,
+  border: 0,
+  overflow: "hidden",
+  clipPath: "inset(50%)",
+  whiteSpace: "nowrap",
+};
+
+const HOISTS_STYLES = !version.startsWith("18.");
+
+export function HoldButtonStyles() {
   useInsertionEffect(() => {
-    if (document.getElementById(STYLE_ID)) return;
+    if (HOISTS_STYLES || document.querySelector(`style[data-onpurpose="${STYLE_KEY}"]`)) return;
     const style = document.createElement("style");
-    style.id = STYLE_ID;
+    style.dataset.onpurpose = STYLE_KEY;
     style.textContent = CSS;
     document.head.appendChild(style);
   }, []);
+
+  return HOISTS_STYLES ? (
+    <style href={STYLE_KEY} precedence="onpurpose">
+      {CSS}
+    </style>
+  ) : null;
 }

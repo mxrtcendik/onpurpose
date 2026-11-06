@@ -1,5 +1,7 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { act, createRef, type PointerEvent as ReactPointerEvent } from "react";
+import { hydrateRoot } from "react-dom/client";
+import { renderToString } from "react-dom/server";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { HoldButton } from "./hold-button";
 
@@ -25,8 +27,12 @@ beforeEach(() => {
 afterEach(() => {
   cleanup();
   vi.useRealTimers();
-  document.getElementById("onpurpose")?.remove();
+  document.querySelector("style[data-onpurpose]")?.remove();
 });
+
+function ourStyles() {
+  return document.querySelectorAll('style[data-href^="onpurpose-"], style[data-onpurpose]');
+}
 
 function advance(ms: number) {
   act(() => {
@@ -422,8 +428,9 @@ describe("HoldButton", () => {
       </>,
     );
 
-    const styles = document.querySelectorAll("#onpurpose");
+    const styles = ourStyles();
     expect(styles).toHaveLength(1);
+    expect(styles[0]?.parentElement).toBe(document.head);
     expect(styles[0]?.textContent).toMatch(/^@layer theme, base, components, utilities;/);
     expect(styles[0]?.textContent).toContain("@layer components.hold-button");
     expect(styles[0]?.textContent).toContain("--hold-fill");
@@ -436,6 +443,51 @@ describe("HoldButton", () => {
     expect(css).toContain("44px");
     expect(css).toContain("forced-colors: active");
     expect(css).toContain("Highlight");
+  });
+
+  it("still styles the page when another element has the id onpurpose", () => {
+    const section = document.createElement("section");
+    section.id = "onpurpose";
+    document.body.append(section);
+    render(<HoldButton onConfirm={() => {}}>One</HoldButton>);
+
+    expect(ourStyles()).toHaveLength(1);
+    section.remove();
+  });
+
+  it("hides the hint and live region before any stylesheet loads", () => {
+    const html = renderToString(<HoldButton onConfirm={() => {}}>Hold to delete</HoldButton>);
+    const host = document.createElement("div");
+    host.innerHTML = html.replace(/<style[\s\S]*?<\/style>/, "");
+
+    for (const span of host.querySelectorAll<HTMLElement>(".onpurpose-sr")) {
+      expect(span.style.position).toBe("absolute");
+      expect(span.style.clipPath).toBe("inset(50%)");
+      expect(span.style.width).toBe("1px");
+    }
+  });
+
+  it("hydrates server markup without a mismatch", async () => {
+    vi.useRealTimers();
+    const ui = (
+      <HoldButton aria-describedby="extra" onConfirm={() => {}}>
+        {(state) => `Hold to delete (${state})`}
+      </HoldButton>
+    );
+    const host = document.createElement("div");
+    host.innerHTML = renderToString(ui);
+    document.body.append(host);
+    const errors: unknown[] = [];
+    const error = vi.spyOn(console, "error").mockImplementation((...args) => errors.push(args));
+
+    await act(async () => {
+      hydrateRoot(host, ui, { onRecoverableError: (cause) => errors.push(cause) });
+    });
+
+    expect(errors).toEqual([]);
+    expect(screen.getByRole("button", { name: "Hold to delete (idle)" })).toBeInTheDocument();
+    error.mockRestore();
+    host.remove();
   });
 
   it("does not start a hold from a non-primary button", () => {
