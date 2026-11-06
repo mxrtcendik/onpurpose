@@ -62,7 +62,7 @@ const handled = [
       "disabled stops a hold that's already going, and a disabled button can't start one.",
       "Handlers you pass run first. Call preventDefault and the hold never starts.",
       "A short press still clicks, and that click bubbles. It does not confirm. After a finished hold, letting go doesn't click, so a parent handler won't run as well.",
-      "type is button unless you say otherwise, so it won't submit a form.",
+      'It never submits or resets its form, even with type="submit". A quick click can\'t send the form.',
       "If the button unmounts mid-hold, the timer is cleared. onConfirm does not run after it's gone.",
       "With reduced motion, the button doesn't shrink and an early release snaps back. The fill still moves, because that's how you can tell the hold is working.",
     ],
@@ -182,8 +182,8 @@ export function App() {
             <p>
               It takes 1.5 seconds. The fill crosses the button in that same time, so you can see
               how close you are. Let go and it eases back. While you're pressing, the button settles
-              in a little. <code>type</code> is <code>button</code>, so it won't submit a form you
-              drop it into.
+              in a little. It never submits or resets a form, even with <code>type="submit"</code>.
+              If sending the form is the action, do it in <code>onConfirm</code>.
             </p>
             <p>
               <code>onConfirm</code> returns right away. If the work is a request, the button is

@@ -22,7 +22,7 @@ React 18.3 and 19. No provider, and no stylesheet to import. It picks up the fon
 
 ### 1. Pass the action
 
-`onConfirm` runs once, at the end of the hold. The words inside the button are the label. `type` is `"button"`, so it won't submit a form you drop it into.
+`onConfirm` runs once, at the end of the hold. The words inside the button are the label. It never submits or resets a form, even with `type="submit"`. If sending the form is the action, do it in `onConfirm`, for example with `form.requestSubmit()`.
 
 The hold is 1.5 seconds, and that time isn't a prop. The fill crosses the button over those same 1.5 seconds, so you can see how close you are. Let go and it eases back over 200ms. `onConfirm` doesn't run. While you're pressing, the button scales to `0.97`.
 
@@ -113,6 +113,7 @@ If you pass `onPointerDown`, `onKeyDown`, or another handler the button uses, yo
 
 - Tab away, switch windows, or hide the tab, and an unfinished hold cancels. It won't finish in the background.
 - `disabled` stops a hold that's already going, and a disabled button can't start one.
+- It never submits or resets its form, even with `type="submit"`. A quick click can't send the form.
 - A short press still clicks, and that click bubbles. It does not confirm. After a finished hold, letting go doesn't click, so a parent handler won't run as well.
 - If the button unmounts mid-hold, the timer is cleared. `onConfirm` does not run after it's gone.
 - With reduced motion, the button doesn't shrink and an early release snaps back. The fill still moves, because that's how you can tell the hold is working.

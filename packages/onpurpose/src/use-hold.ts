@@ -236,9 +236,9 @@ export function useHoldButton({
   };
 
   const onClick = (event: MouseEvent<HTMLButtonElement>) => {
+    event.preventDefault();
     if (!suppressClickRef.current) return;
     suppressClickRef.current = false;
-    event.preventDefault();
     event.stopPropagation();
   };
 

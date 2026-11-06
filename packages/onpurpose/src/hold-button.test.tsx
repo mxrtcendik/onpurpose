@@ -467,6 +467,30 @@ describe("HoldButton", () => {
     expect(parentClick).not.toHaveBeenCalled();
   });
 
+  it.each(["submit", "reset"] as const)("does not %s its form on a plain click", (type) => {
+    const onSubmit = vi.fn((event: Event) => event.preventDefault());
+    const onReset = vi.fn();
+    render(
+      <form onSubmit={(event) => onSubmit(event.nativeEvent)} onReset={onReset}>
+        <HoldButton type={type} onConfirm={() => {}}>
+          Hold to delete
+        </HoldButton>
+      </form>,
+    );
+    const button = screen.getByRole("button", { name: "Hold to delete" });
+
+    point("pointerDown", button);
+    point("pointerUp", button);
+    const click = new MouseEvent("click", { bubbles: true, cancelable: true });
+    act(() => {
+      button.dispatchEvent(click);
+    });
+
+    expect(click.defaultPrevented).toBe(true);
+    expect(onSubmit).not.toHaveBeenCalled();
+    expect(onReset).not.toHaveBeenCalled();
+  });
+
   it("blocks the context menu while a hold is in progress", () => {
     const { button } = renderButton();
     point("pointerDown", button);
