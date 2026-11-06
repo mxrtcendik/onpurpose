@@ -17,6 +17,7 @@ export type HoldButtonState = "idle" | "holding" | "confirmed";
 const DWELL_MS = 700;
 const ARM_MS = 10_000;
 const PRESS_CLICK_MS = 1000;
+const HAPTIC_MS = 15;
 const TOUCH_SLOP_PX = 8;
 
 const useIsoLayoutEffect = typeof document === "undefined" ? useEffect : useLayoutEffect;
@@ -30,8 +31,13 @@ function isThenable(value: unknown): value is PromiseLike<unknown> {
 }
 
 type Gesture =
-  | { kind: "pointer"; pointerId: number; slop: number; coarse: boolean }
+  | { kind: "pointer"; pointerId: number; slop: number; coarse: boolean; touch: boolean }
   | { kind: "key"; key: string };
+
+function buzz() {
+  if (typeof navigator.vibrate !== "function" || !navigator.userActivation?.hasBeenActive) return;
+  navigator.vibrate(HAPTIC_MS);
+}
 
 function pointerIsInside(
   x: number,
@@ -158,6 +164,8 @@ export function useHoldButton({
     disarm();
     setPhaseBoth("confirmed");
     announce(messagesRef.current.confirmed);
+    const gesture = gestureRef.current;
+    if (gesture?.kind === "pointer" && gesture.touch) buzz();
     const result = onConfirmRef.current();
     if (!isThenable(result)) return;
     const token = pendingRef.current + 1;
@@ -267,6 +275,7 @@ export function useHoldButton({
       pointerId: event.pointerId,
       slop: event.pointerType === "mouse" ? 0 : TOUCH_SLOP_PX,
       coarse: window.matchMedia?.("(pointer: coarse)").matches ?? false,
+      touch: event.pointerType !== "mouse",
     };
     try {
       event.currentTarget.setPointerCapture(event.pointerId);

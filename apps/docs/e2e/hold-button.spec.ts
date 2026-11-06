@@ -337,6 +337,47 @@ test.describe("touch", () => {
     await expect(page.getByTestId("confirms")).toHaveAttribute("data-count", "1");
   });
 
+  test("buzzes once when a touch hold confirms, not for a mouse", async ({ page }) => {
+    const warnings: string[] = [];
+    page.on("console", (message) => {
+      if (message.type() === "warning" || message.type() === "error") warnings.push(message.text());
+    });
+    await page.addInitScript(() => {
+      const calls: unknown[] = [];
+      (window as unknown as { buzzes: unknown[] }).buzzes = calls;
+      Object.defineProperty(navigator, "vibrate", {
+        configurable: true,
+        value: (pattern: unknown) => {
+          calls.push(pattern);
+          return true;
+        },
+      });
+    });
+    await page.reload();
+    const hold = await button(page);
+    const buzzes = () => page.evaluate(() => (window as unknown as { buzzes: unknown[] }).buzzes);
+    const session = await page.context().newCDPSession(page);
+    const touchHold = async () => {
+      const point = await center(hold);
+      await session.send("Input.dispatchTouchEvent", {
+        type: "touchStart",
+        touchPoints: [{ x: point.x, y: point.y, id: 1 }],
+      });
+      await expect(hold).toHaveAttribute("data-state", "confirmed", { timeout: 3_000 });
+      await session.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
+      await expect(hold).toHaveAttribute("data-state", "idle");
+    };
+
+    await touchHold();
+    expect(await buzzes()).toEqual([15]);
+
+    await press(page, hold);
+    await expect(hold).toHaveAttribute("data-state", "confirmed", { timeout: 3_000 });
+    await page.mouse.up();
+    expect(await buzzes()).toEqual([15]);
+    expect(warnings.filter((text) => text.includes("vibrate"))).toEqual([]);
+  });
+
   test("quick taps never arm or confirm", async ({ page }) => {
     const hold = await button(page);
     const status = hold.locator("xpath=following-sibling::*[1]");

@@ -65,6 +65,7 @@ const handled = [
       "If the pointer is cancelled, or something else takes over the pointer, the hold cancels.",
       "On a phone, the long-press menu, text selection, and magnifier stay out of the way while you hold.",
       "Scroll the button out from under your finger and the hold cancels.",
+      "On Android, a touch hold that confirms gives a short buzz. iPhones don't let the web do that.",
     ],
   },
   {

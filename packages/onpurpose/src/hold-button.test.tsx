@@ -700,6 +700,45 @@ describe("HoldButton", () => {
     expect(screen.getByRole("status")).toHaveTextContent("Actívalo otra vez para confirmar");
   });
 
+  it("buzzes once when a touch hold confirms, and only then", () => {
+    const vibrate = vi.fn(() => true);
+    const activation = { hasBeenActive: true };
+    Object.defineProperty(navigator, "vibrate", { configurable: true, value: vibrate });
+    Object.defineProperty(navigator, "userActivation", { configurable: true, value: activation });
+    const { button } = renderButton();
+
+    point("pointerDown", button);
+    advance(1500);
+    point("pointerUp", button);
+    advance(1000);
+    fireEvent.keyDown(button, { key: "Enter" });
+    advance(1500);
+    fireEvent.keyUp(button, { key: "Enter" });
+    advance(1000);
+    fireEvent.click(button);
+    fireEvent.click(button);
+    advance(1000);
+    point("pointerDown", button, { pointerType: "touch" });
+    advance(500);
+    point("pointerUp", button, { pointerType: "touch" });
+    expect(vibrate).not.toHaveBeenCalled();
+
+    point("pointerDown", button, { pointerType: "touch" });
+    advance(1500);
+    expect(vibrate).toHaveBeenCalledOnce();
+    expect(vibrate).toHaveBeenCalledWith(15);
+    point("pointerUp", button, { pointerType: "touch" });
+    advance(1000);
+
+    activation.hasBeenActive = false;
+    point("pointerDown", button, { pointerType: "pen" });
+    advance(1500);
+    expect(vibrate).toHaveBeenCalledOnce();
+
+    Reflect.deleteProperty(navigator, "vibrate");
+    Reflect.deleteProperty(navigator, "userActivation");
+  });
+
   it("announces from a live region outside the button", () => {
     const { button } = renderButton();
     const status = screen.getByRole("status");
