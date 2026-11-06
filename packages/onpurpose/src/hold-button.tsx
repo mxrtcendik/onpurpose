@@ -5,12 +5,26 @@ import { type HoldButtonState, useHoldButton } from "./use-hold";
 
 export type { HoldButtonState };
 
+export type HoldButtonMessages = {
+  /** Read after the label, telling people how to use the button. */
+  hint?: string;
+  /** Announced when a hold confirms. */
+  confirmed?: string;
+};
+
 export type HoldButtonProps = Omit<ComponentPropsWithRef<"button">, "children" | "onClick"> & {
   /** Runs once, when the hold finishes. */
   onConfirm: () => void;
   /** The label. Pass a function to change it with the hold state. */
   children: ReactNode | ((state: HoldButtonState) => ReactNode);
+  /** Text for screen readers. Each one defaults to English. */
+  messages?: HoldButtonMessages;
 };
+
+const DEFAULT_MESSAGES = {
+  hint: "Press and hold to confirm",
+  confirmed: "Confirmed",
+} satisfies Required<HoldButtonMessages>;
 
 type EventWithDefault = { defaultPrevented: boolean };
 
@@ -36,6 +50,7 @@ export const HoldButton = forwardRef<HTMLButtonElement, HoldButtonProps>(functio
   {
     onConfirm,
     children,
+    messages,
     className,
     disabled,
     type = "button",
@@ -58,7 +73,8 @@ export const HoldButton = forwardRef<HTMLButtonElement, HoldButtonProps>(functio
   const hintId = useId();
   const labelId = useId();
   const forwardedRef = useRef(ref);
-  const hold = useHoldButton({ disabled, onConfirm });
+  const text = { ...DEFAULT_MESSAGES, ...messages };
+  const hold = useHoldButton({ disabled, onConfirm, confirmedMessage: text.confirmed });
 
   forwardedRef.current = ref;
 
@@ -110,12 +126,12 @@ export const HoldButton = forwardRef<HTMLButtonElement, HoldButtonProps>(functio
           </span>
         </span>
         <span id={hintId} className="onpurpose-sr" style={SR_ONLY}>
-          Press and hold to confirm
-        </span>
-        <span role="status" className="onpurpose-sr" style={SR_ONLY}>
-          {hold.announcement}
+          {text.hint}
         </span>
       </button>
+      <span role="status" className="onpurpose-sr" style={SR_ONLY}>
+        {hold.announcement}
+      </span>
     </>
   );
 });

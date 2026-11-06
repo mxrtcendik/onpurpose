@@ -29,6 +29,16 @@ const tailwindCode = `<HoldButton
   Hold to revoke
 </HoldButton>`;
 
+const messagesCode = `<HoldButton
+  messages={{
+    hint: "Mantén pulsado para confirmar",
+    confirmed: "Eliminado",
+  }}
+  onConfirm={() => deleteProject()}
+>
+  Mantén para eliminar
+</HoldButton>`;
+
 const rowCode = `<div className="row" onClick={openProject}>
   <div>
     <p>Northwind</p>
@@ -297,9 +307,17 @@ export function App() {
           <code>aria-label</code> or <code>aria-labelledby</code> if the name should be something
           else. A hidden note, “Press and hold to confirm”, is attached with{" "}
           <code>aria-describedby</code>. Pass your own and your ids come first. When the hold
-          finishes, a live region says “Confirmed”. That note, and the word “Confirmed”, are
-          English. There isn't a prop to change them.
+          finishes, a live region right after the button says “Confirmed”. It stays said even if you
+          disable the button the moment it confirms.
         </p>
+        <h3>Other languages</h3>
+        <p>
+          Both phrases are English until you pass <code>messages</code>. Anything you leave out
+          stays English.
+        </p>
+        <pre>
+          <code>{messagesCode}</code>
+        </pre>
         <h3>Hit target</h3>
         <p>
           On a touch screen the tappable area is at least 44px tall. The button doesn't grow to get

@@ -124,7 +124,21 @@ If you pass `onPointerDown`, `onKeyDown`, or another handler the button uses, yo
 
 ## Accessibility
 
-It's a normal `<button>`, with a focus ring you can see. The name is the label. Pass `aria-label` or `aria-labelledby` if the name should be something else. A hidden note, "Press and hold to confirm", is attached with `aria-describedby`. Pass your own and your ids come first. When the hold finishes, a live region says "Confirmed". That note, and the word "Confirmed", are English. There isn't a prop to change them.
+It's a normal `<button>`, with a focus ring you can see. The name is the label. Pass `aria-label` or `aria-labelledby` if the name should be something else. A hidden note, "Press and hold to confirm", is attached with `aria-describedby`. Pass your own and your ids come first. When the hold finishes, a live region right after the button says "Confirmed". It stays said even if you disable the button the moment it confirms.
+
+Both phrases are English until you pass `messages`. Anything you leave out stays English.
+
+```tsx
+<HoldButton
+  messages={{
+    hint: "Mantén pulsado para confirmar",
+    confirmed: "Eliminado",
+  }}
+  onConfirm={() => deleteProject()}
+>
+  Mantén para eliminar
+</HoldButton>;
+```
 
 On a touch screen the tappable area is at least 44px tall. The button doesn't grow to get there.
 

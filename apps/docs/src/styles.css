@@ -273,7 +273,8 @@ p code,
   margin-top: 1rem;
 }
 
-.section pre + p {
+.section pre + p,
+.section p + pre {
   margin-top: 0.85rem;
 }
 

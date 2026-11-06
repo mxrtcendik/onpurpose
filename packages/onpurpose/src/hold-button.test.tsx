@@ -1,5 +1,5 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
-import { act, createRef, type PointerEvent as ReactPointerEvent } from "react";
+import { act, createRef, type PointerEvent as ReactPointerEvent, useState } from "react";
 import { hydrateRoot } from "react-dom/client";
 import { renderToString } from "react-dom/server";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -60,6 +60,15 @@ function point(
 function renderButton(onConfirm = vi.fn()) {
   render(<HoldButton onConfirm={onConfirm}>Hold to delete</HoldButton>);
   return { onConfirm, button: screen.getByRole("button", { name: "Hold to delete" }) };
+}
+
+function DisablesOnConfirm() {
+  const [removed, setRemoved] = useState(false);
+  return (
+    <HoldButton disabled={removed} onConfirm={() => setRemoved(true)}>
+      Hold to delete
+    </HoldButton>
+  );
 }
 
 describe("HoldButton", () => {
@@ -418,6 +427,69 @@ describe("HoldButton", () => {
     expect(describedBy.startsWith("extra ")).toBe(true);
     const hint = document.getElementById(describedBy.slice("extra ".length));
     expect(hint).toHaveTextContent("Press and hold to confirm");
+  });
+
+  it("announces from a live region outside the button", () => {
+    const { button } = renderButton();
+    const status = screen.getByRole("status");
+
+    expect(button.contains(status)).toBe(false);
+    expect(button.nextElementSibling).toBe(status);
+    point("pointerDown", button);
+    advance(1500);
+    expect(status).toHaveTextContent("Confirmed");
+  });
+
+  it("keeps the announcement when the button is disabled as it confirms", () => {
+    render(<DisablesOnConfirm />);
+    const button = screen.getByRole("button", { name: "Hold to delete" });
+
+    point("pointerDown", button);
+    advance(1500);
+    expect(button).toBeDisabled();
+    expect(button).toHaveAttribute("data-state", "idle");
+    expect(screen.getByRole("status")).toHaveTextContent("Confirmed");
+    advance(5000);
+    expect(screen.getByRole("status")).toHaveTextContent("Confirmed");
+  });
+
+  it("clears the announcement when the next hold starts, so it is read again", () => {
+    const { button } = renderButton();
+    point("pointerDown", button);
+    advance(1500);
+    point("pointerUp", button);
+    advance(1000);
+
+    point("pointerDown", button);
+    expect(screen.getByRole("status")).toBeEmptyDOMElement();
+    advance(1500);
+    expect(screen.getByRole("status")).toHaveTextContent("Confirmed");
+  });
+
+  it("uses messages for the hint and the announcement", () => {
+    render(
+      <HoldButton
+        messages={{ hint: "Mantén pulsado para confirmar", confirmed: "Eliminado" }}
+        onConfirm={() => {}}
+      >
+        Mantén para eliminar
+      </HoldButton>,
+    );
+    const button = screen.getByRole("button", { name: "Mantén para eliminar" });
+
+    expect(button).toHaveAccessibleDescription("Mantén pulsado para confirmar");
+    point("pointerDown", button);
+    advance(1500);
+    expect(screen.getByRole("status")).toHaveTextContent("Eliminado");
+  });
+
+  it("keeps the English default for any message left out", () => {
+    render(
+      <HoldButton messages={{ confirmed: "Gelöscht" }} onConfirm={() => {}}>
+        Halten zum Löschen
+      </HoldButton>,
+    );
+    expect(screen.getByRole("button")).toHaveAccessibleDescription("Press and hold to confirm");
   });
 
   it("injects one shared stylesheet", () => {

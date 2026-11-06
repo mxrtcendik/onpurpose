@@ -42,13 +42,16 @@ function pointerIsInside(
 export function useHoldButton({
   disabled,
   onConfirm,
+  confirmedMessage,
 }: {
   disabled: boolean | undefined;
   onConfirm: () => void;
+  confirmedMessage: string;
 }) {
   const buttonRef = useRef<HTMLButtonElement>(null);
   const fillRef = useRef<HTMLSpanElement>(null);
   const onConfirmRef = useRef(onConfirm);
+  const confirmedMessageRef = useRef(confirmedMessage);
   const gestureRef = useRef<Gesture | null>(null);
   const phaseRef = useRef<HoldButtonState>("idle");
   const mountedRef = useRef(true);
@@ -64,6 +67,7 @@ export function useHoldButton({
   const [announcement, setAnnouncement] = useState("");
 
   onConfirmRef.current = onConfirm;
+  confirmedMessageRef.current = confirmedMessage;
 
   const setPhaseBoth = (next: HoldButtonState) => {
     phaseRef.current = next;
@@ -92,7 +96,6 @@ export function useHoldButton({
     clearDwell();
     if (phaseRef.current === "idle") return;
     setPhaseBoth("idle");
-    setAnnouncement("");
   };
 
   const endGesture = () => {
@@ -107,7 +110,6 @@ export function useHoldButton({
       dwellTimerRef.current = window.setTimeout(() => {
         if (!mountedRef.current || gestureRef.current || phaseRef.current !== "confirmed") return;
         setPhaseBoth("idle");
-        setAnnouncement("");
       }, DWELL_MS);
       return;
     }
@@ -156,7 +158,7 @@ export function useHoldButton({
     holdTimerRef.current = window.setTimeout(() => {
       if (!mountedRef.current || phaseRef.current !== "holding") return;
       setPhaseBoth("confirmed");
-      setAnnouncement("Confirmed");
+      setAnnouncement(confirmedMessageRef.current);
       onConfirmRef.current();
     }, HOLD_MS);
   };

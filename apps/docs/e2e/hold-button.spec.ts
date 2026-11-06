@@ -80,7 +80,10 @@ test("mouse hold confirms once", async ({ page }) => {
   await expect(hold).toHaveAttribute("data-state", "holding");
   await expect(page.getByTestId("confirms")).toHaveAttribute("data-count", "0");
   await expect(hold).toHaveAttribute("data-state", "confirmed", { timeout: 3_000 });
-  await expect(hold.getByRole("status")).toHaveText("Confirmed");
+  const status = hold.locator("xpath=following-sibling::*[1]");
+  await expect(status).toHaveAttribute("role", "status");
+  await expect(status).toHaveText("Confirmed");
+  expect(await hold.ariaSnapshot()).not.toContain("status");
   await expect(page.getByTestId("confirms")).toHaveAttribute("data-count", "1");
   await page.waitForTimeout(400);
   await expect(page.getByTestId("confirms")).toHaveAttribute("data-count", "1");
