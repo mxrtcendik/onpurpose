@@ -534,6 +534,104 @@ describe("HoldButton", () => {
     error.mockRestore();
   });
 
+  it("arms on a click with no press, and confirms on a second one", () => {
+    const { onConfirm, button } = renderButton();
+
+    fireEvent.click(button);
+    expect(onConfirm).not.toHaveBeenCalled();
+    expect(button).toHaveAttribute("data-state", "idle");
+    expect(screen.getByRole("status")).toHaveTextContent("Activate again to confirm");
+
+    advance(3000);
+    fireEvent.click(button);
+    expect(onConfirm).toHaveBeenCalledOnce();
+    expect(button).toHaveAttribute("data-state", "confirmed");
+    expect(screen.getByRole("status")).toHaveTextContent("Confirmed");
+    advance(700);
+    expect(button).toHaveAttribute("data-state", "idle");
+
+    fireEvent.click(button);
+    expect(onConfirm).toHaveBeenCalledOnce();
+  });
+
+  it("forgets the first activation after ten seconds or when focus leaves", () => {
+    const { onConfirm, button } = renderButton();
+
+    fireEvent.click(button);
+    advance(10_000);
+    fireEvent.click(button);
+    expect(onConfirm).not.toHaveBeenCalled();
+    advance(10_000);
+
+    button.focus();
+    fireEvent.click(button);
+    fireEvent.blur(button);
+    fireEvent.click(button);
+    expect(onConfirm).not.toHaveBeenCalled();
+  });
+
+  it("never arms from a mouse or touch click", () => {
+    const { onConfirm, button } = renderButton();
+
+    for (const pointerType of ["mouse", "touch", "mouse"]) {
+      point("pointerDown", button, { pointerType });
+      advance(100);
+      point("pointerUp", button, { pointerType });
+      fireEvent.click(button, { detail: 1 });
+    }
+    expect(onConfirm).not.toHaveBeenCalled();
+    expect(screen.getByRole("status")).toBeEmptyDOMElement();
+  });
+
+  it("drops the arm when a real press starts", () => {
+    const { onConfirm, button } = renderButton();
+
+    fireEvent.click(button);
+    point("pointerDown", button);
+    advance(200);
+    point("pointerUp", button);
+    advance(1500);
+    fireEvent.click(button);
+    expect(onConfirm).not.toHaveBeenCalled();
+    expect(screen.getByRole("status")).toHaveTextContent("Activate again to confirm");
+  });
+
+  it("reads the arming message again each time", () => {
+    const { button } = renderButton();
+    const status = screen.getByRole("status");
+
+    fireEvent.click(button);
+    const first = status.textContent;
+    advance(10_000);
+    fireEvent.click(button);
+    expect(status.textContent).not.toBe(first);
+    expect(status.textContent?.trim()).toBe("Activate again to confirm");
+  });
+
+  it("waits for a promise after a two-step confirm", async () => {
+    const work = deferred();
+    const { button } = renderButton(vi.fn(() => work.promise));
+
+    fireEvent.click(button);
+    fireEvent.click(button);
+    advance(5000);
+    expect(button).toHaveAttribute("aria-busy", "true");
+    expect(button).toHaveAttribute("data-state", "confirmed");
+    await act(async () => work.resolve());
+    advance(700);
+    expect(button).toHaveAttribute("data-state", "idle");
+  });
+
+  it("uses messages.again", () => {
+    render(
+      <HoldButton messages={{ again: "Actívalo otra vez para confirmar" }} onConfirm={() => {}}>
+        Eliminar
+      </HoldButton>,
+    );
+    fireEvent.click(screen.getByRole("button"));
+    expect(screen.getByRole("status")).toHaveTextContent("Actívalo otra vez para confirmar");
+  });
+
   it("announces from a live region outside the button", () => {
     const { button } = renderButton();
     const status = screen.getByRole("status");

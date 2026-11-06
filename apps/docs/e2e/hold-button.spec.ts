@@ -129,6 +129,30 @@ test("a click does not confirm", async ({ page }) => {
   await expect(page.getByTestId("confirms")).toHaveAttribute("data-count", "0");
 });
 
+test("mouse double-clicks and quick key presses never arm or confirm", async ({ page }) => {
+  const hold = await button(page);
+  const status = hold.locator("xpath=following-sibling::*[1]");
+  await hold.dblclick();
+  await hold.click();
+  await hold.focus();
+  for (const key of ["Enter", "Space", "Enter", "Space"]) await page.keyboard.press(key);
+  await page.waitForTimeout(300);
+  await expect(status).toHaveText("");
+  await expect(page.getByTestId("confirms")).toHaveAttribute("data-count", "0");
+});
+
+test("two activations without a press confirm, as a screen reader sends them", async ({ page }) => {
+  const hold = await button(page);
+  const status = hold.locator("xpath=following-sibling::*[1]");
+  await hold.evaluate((element) => (element as HTMLButtonElement).click());
+  await expect(status).toHaveText("Activate again to confirm");
+  await expect(page.getByTestId("confirms")).toHaveAttribute("data-count", "0");
+  await hold.evaluate((element) => (element as HTMLButtonElement).click());
+  await expect(page.getByTestId("confirms")).toHaveAttribute("data-count", "1");
+  await expect(status).toHaveText("Confirmed");
+  await expect(hold).toHaveAttribute("data-state", "idle");
+});
+
 test("only clip-path, transform, and opacity animate", async ({ page }) => {
   const css = await page.locator('style[data-href^="onpurpose-"]').textContent();
   expect(css).toBeTruthy();
@@ -275,6 +299,15 @@ test.describe("touch", () => {
     await expect(hold).toHaveAttribute("data-state", "confirmed");
     await expect(hold).toHaveAttribute("data-state", "idle");
     await expect(page.getByTestId("confirms")).toHaveAttribute("data-count", "1");
+  });
+
+  test("quick taps never arm or confirm", async ({ page }) => {
+    const hold = await button(page);
+    const status = hold.locator("xpath=following-sibling::*[1]");
+    for (let i = 0; i < 3; i++) await hold.tap();
+    await page.waitForTimeout(300);
+    await expect(status).toHaveText("");
+    await expect(page.getByTestId("confirms")).toHaveAttribute("data-count", "0");
   });
 
   test("a touch in the extended hit area survives finger jitter", async ({ page }) => {

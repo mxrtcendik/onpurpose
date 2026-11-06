@@ -10,6 +10,8 @@ export type HoldButtonMessages = {
   hint?: string;
   /** Announced when a hold confirms. */
   confirmed?: string;
+  /** Announced when a screen reader activates the button once, which arms it. */
+  again?: string;
 };
 
 export type HoldButtonProps = Omit<ComponentPropsWithRef<"button">, "children" | "onClick"> & {
@@ -27,6 +29,7 @@ export type HoldButtonProps = Omit<ComponentPropsWithRef<"button">, "children" |
 const DEFAULT_MESSAGES = {
   hint: "Press and hold to confirm",
   confirmed: "Confirmed",
+  again: "Activate again to confirm",
 } satisfies Required<HoldButtonMessages>;
 
 type EventWithDefault = { defaultPrevented: boolean };
@@ -77,7 +80,7 @@ export const HoldButton = forwardRef<HTMLButtonElement, HoldButtonProps>(functio
   const labelId = useId();
   const forwardedRef = useRef(ref);
   const text = { ...DEFAULT_MESSAGES, ...messages };
-  const hold = useHoldButton({ disabled, onConfirm, confirmedMessage: text.confirmed });
+  const hold = useHoldButton({ disabled, onConfirm, messages: text });
 
   forwardedRef.current = ref;
 

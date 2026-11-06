@@ -39,6 +39,7 @@ const messagesCode = `<HoldButton
   messages={{
     hint: "Mantén pulsado para confirmar",
     confirmed: "Eliminado",
+    again: "Actívalo otra vez para confirmar",
   }}
   onConfirm={() => deleteProject()}
 >
@@ -331,8 +332,8 @@ export function App() {
         </p>
         <h3>Other languages</h3>
         <p>
-          Both phrases are English until you pass <code>messages</code>. Anything you leave out
-          stays English.
+          The hint, the confirmation and the arming message are English until you pass{" "}
+          <code>messages</code>. Anything you leave out stays English.
         </p>
         <pre>
           <code>{messagesCode}</code>
@@ -349,22 +350,30 @@ export function App() {
         </p>
         <h3>Screen readers</h3>
         <p>
-          Screen readers activate a button with a click. They don't hold it for 1.5 seconds, and
-          this button won't treat that click as a confirm. A double-tap can't delete anything. Space
-          and Enter only confirm when those keys actually reach the page.
+          Screen readers usually activate a button with a single click, not a 1.5 second hold. So a
+          click that arrives without a press on the button first is treated as a deliberate
+          activation, not a misclick. The first one arms the button and says “Activate again to
+          confirm”. A second one within 10 seconds confirms. Moving focus away, or waiting longer,
+          starts over.
+        </p>
+        <p>
+          A mouse click or a tap always comes with a press, so it never arms anything. A
+          double-click or a double-tap still can't delete. Code that calls{" "}
+          <code>button.click()</code> twice takes the same path a screen reader does.
         </p>
         <ul className="list">
           <li>
-            macOS VoiceOver: VO+Space is a click, so it doesn't confirm. Holding a real key can
-            still get through in Safari, and that does.
+            NVDA and JAWS in browse mode, and macOS VoiceOver with VO+Space, send a plain click.
+            Activate twice to confirm. In focus or pass-through mode, holding Space or Enter works
+            like it does for everyone.
           </li>
           <li>
-            iOS VoiceOver and TalkBack: a double-tap is a click or a short tap. It doesn't confirm.
+            iOS VoiceOver and TalkBack can send a double-tap as a short tap. When they do, it
+            doesn't arm. Double-tap and hold passes a real hold through, and that confirms.
           </li>
           <li>
-            NVDA and JAWS in browse mode: Enter usually arrives as a click, not a held key. Chrome
-            can't tell that click from a mouse click, so it doesn't confirm. Pass-through mode can
-            send a real key hold, and that does.
+            This was tested with the clicks and taps a browser receives, not with every screen
+            reader and browser pair. If one behaves differently, please open an issue.
           </li>
         </ul>
       </section>

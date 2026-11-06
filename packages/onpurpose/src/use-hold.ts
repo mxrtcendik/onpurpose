@@ -15,6 +15,8 @@ import { HOLD_MS, TARGET_PX } from "./styles";
 export type HoldButtonState = "idle" | "holding" | "confirmed";
 
 const DWELL_MS = 700;
+const ARM_MS = 10_000;
+const PRESS_CLICK_MS = 1000;
 const TOUCH_SLOP_PX = 8;
 
 const useIsoLayoutEffect = typeof document === "undefined" ? useEffect : useLayoutEffect;
@@ -50,16 +52,20 @@ function pointerIsInside(
 export function useHoldButton({
   disabled,
   onConfirm,
-  confirmedMessage,
+  messages,
 }: {
   disabled: boolean | undefined;
   onConfirm: () => unknown;
-  confirmedMessage: string;
+  messages: { confirmed: string; again: string };
 }) {
   const buttonRef = useRef<HTMLButtonElement>(null);
   const fillRef = useRef<HTMLSpanElement>(null);
   const onConfirmRef = useRef(onConfirm);
-  const confirmedMessageRef = useRef(confirmedMessage);
+  const messagesRef = useRef(messages);
+  const lastPointerUpRef = useRef(Number.NEGATIVE_INFINITY);
+  const armTimerRef = useRef(0);
+  const armedRef = useRef(false);
+  const clickRef = useRef<(event: globalThis.MouseEvent) => void>(() => {});
   const gestureRef = useRef<Gesture | null>(null);
   const phaseRef = useRef<HoldButtonState>("idle");
   const mountedRef = useRef(true);
@@ -77,11 +83,20 @@ export function useHoldButton({
   const [busy, setBusy] = useState(false);
 
   onConfirmRef.current = onConfirm;
-  confirmedMessageRef.current = confirmedMessage;
+  messagesRef.current = messages;
 
   const setPhaseBoth = (next: HoldButtonState) => {
     phaseRef.current = next;
     setPhase(next);
+  };
+
+  const announce = (text: string) => {
+    setAnnouncement((current) => (current === text ? `${text} ` : text));
+  };
+
+  const disarm = () => {
+    armedRef.current = false;
+    window.clearTimeout(armTimerRef.current);
   };
 
   const removePageListeners = () => {
@@ -140,8 +155,9 @@ export function useHoldButton({
   };
 
   const confirm = () => {
+    disarm();
     setPhaseBoth("confirmed");
-    setAnnouncement(confirmedMessageRef.current);
+    announce(messagesRef.current.confirmed);
     const result = onConfirmRef.current();
     if (!isThenable(result)) return;
     const token = pendingRef.current + 1;
@@ -162,6 +178,7 @@ export function useHoldButton({
     removePageListeners();
     window.clearTimeout(holdTimerRef.current);
     releasePointer(gesture);
+    disarm();
     goIdle();
   };
 
@@ -169,6 +186,7 @@ export function useHoldButton({
   abortRef.current = abort;
 
   const beginHold = () => {
+    disarm();
     window.clearTimeout(holdTimerRef.current);
     clearDwell();
     setPhaseBoth("holding");
@@ -220,6 +238,7 @@ export function useHoldButton({
       mountedRef.current = false;
       window.clearTimeout(holdTimerRef.current);
       window.clearTimeout(dwellTimerRef.current);
+      window.clearTimeout(armTimerRef.current);
       removePageListenersRef.current?.();
       removePageListenersRef.current = null;
     };
@@ -295,6 +314,7 @@ export function useHoldButton({
 
   const onBlur = (event: FocusEvent<HTMLButtonElement>) => {
     if (event.currentTarget.contains(event.relatedTarget)) return;
+    disarm();
     endGesture();
   };
 
@@ -302,17 +322,39 @@ export function useHoldButton({
     if (gestureRef.current) event.preventDefault();
   };
 
+  clickRef.current = (event) => {
+    event.preventDefault();
+    if (suppressClickRef.current) {
+      suppressClickRef.current = false;
+      event.stopPropagation();
+      return;
+    }
+    if (event.timeStamp - lastPointerUpRef.current < PRESS_CLICK_MS) return;
+    if (pendingRef.current || gestureRef.current) return;
+    if (!armedRef.current) {
+      armedRef.current = true;
+      window.clearTimeout(armTimerRef.current);
+      armTimerRef.current = window.setTimeout(disarm, ARM_MS);
+      announce(messagesRef.current.again);
+      return;
+    }
+    confirm();
+    if (!pendingRef.current) dwellThenIdle();
+  };
+
   useEffect(() => {
     const node = buttonRef.current;
     if (!node) return;
-    const onClick = (event: globalThis.MouseEvent) => {
-      event.preventDefault();
-      if (!suppressClickRef.current) return;
-      suppressClickRef.current = false;
-      event.stopPropagation();
+    const onClick = (event: globalThis.MouseEvent) => clickRef.current(event);
+    const onPointerUp = (event: globalThis.PointerEvent) => {
+      lastPointerUpRef.current = event.timeStamp;
     };
     node.addEventListener("click", onClick);
-    return () => node.removeEventListener("click", onClick);
+    node.addEventListener("pointerup", onPointerUp, true);
+    return () => {
+      node.removeEventListener("click", onClick);
+      node.removeEventListener("pointerup", onPointerUp, true);
+    };
   }, []);
 
   return {
