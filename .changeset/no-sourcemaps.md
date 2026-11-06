@@ -2,4 +2,4 @@
 "onpurpose": patch
 ---
 
-Stop publishing sourcemaps that pointed at source files missing from the package.
+The package no longer ships sourcemaps. They pointed at source files that weren't published.

@@ -2,4 +2,4 @@
 "onpurpose": patch
 ---
 
-Stop the click that follows a completed hold before it reaches any ancestor, including native `addEventListener` listeners, not just React handlers.
+The click after a completed hold is stopped before any ancestor sees it, including native `addEventListener` listeners, not just React handlers.

@@ -2,4 +2,4 @@
 "onpurpose": minor
 ---
 
-When `onConfirm` returns a promise, keep the button confirmed and `aria-busy` until it settles and block new holds meanwhile. A rejection returns the button to idle and is still thrown. The label function now also receives `{ busy }`.
+`onConfirm` can return a promise. Until it settles, the button stays confirmed, sets `aria-busy` and won't start another hold. If it rejects, the button returns to idle and the error is rethrown. The label function receives `{ busy }` as a second argument.

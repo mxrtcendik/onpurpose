@@ -2,4 +2,4 @@
 "onpurpose": minor
 ---
 
-Give a short vibration when a touch hold confirms, where the browser supports it.
+A touch hold that confirms gives a short vibration where the browser supports it, which in practice means Android.

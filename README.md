@@ -1,8 +1,8 @@
 # onpurpose
 
-A hold-to-confirm button for React. For delete, publish, revoke, send — anything you don't want on a misclick. Hold it for 1.5 seconds and the action runs. Let go early, or just click, and nothing happens.
+A hold-to-confirm button for React, for the actions you don't want on a misclick: delete, publish, revoke, send. Hold it for 1.5 seconds and the action runs. Let go early, or just click, and nothing happens.
 
-Docs: https://onpurpose.cendik.dev/
+Live demo and docs: https://onpurpose.cendik.dev
 
 ```tsx
 import { HoldButton } from "onpurpose";
@@ -16,21 +16,33 @@ import { HoldButton } from "onpurpose";
 npm install onpurpose
 ```
 
-React 18.3 and 19. No provider, and no stylesheet to import. It picks up the font and color of the page it's on.
+Works with React 18.3 and 19. There's no provider and no stylesheet to import. The button picks up the font and color of the page it's on.
 
-On React 19 its styles render with the page, so a server-rendered button (Next.js App Router included) is styled before any JavaScript runs. On React 18 they're added when the first button mounts, so a server-rendered button looks plain until then. Either way, the hidden screen reader text never shows.
+## Guide
 
-The styles come as a `<style>` element, and server-rendered markup hides the screen reader text with inline `style` attributes. A strict Content Security Policy has to allow inline styles (`style-src 'unsafe-inline'`). Without that, the button still works but looks like a plain browser button.
+### Pass the action
 
-## Use it
+`onConfirm` runs once, when the hold completes. The children are the label.
 
-### 1. Pass the action
+The hold takes 1.5 seconds, and that isn't configurable. The fill crosses the button in exactly that time, so you can see how close you are. Let go early and the fill eases back over 200ms without running anything. While you press, the button settles in slightly.
 
-`onConfirm` runs once, at the end of the hold. The words inside the button are the label. It never submits or resets a form, even with `type="submit"`. If sending the form is the action, do it in `onConfirm`, for example with `form.requestSubmit()`.
+The button never submits or resets a form, even with `type="submit"`. If sending the form is the action, do it in `onConfirm`, for example with `form.requestSubmit()`.
 
-The hold is 1.5 seconds, and that time isn't a prop. The fill crosses the button over those same 1.5 seconds, so you can see how close you are. Let go and it eases back over 200ms. `onConfirm` doesn't run. While you're pressing, the button scales to `0.97`.
+### Change the label
 
-If the action is a request, return its promise. The button stays confirmed and busy until it settles, with `aria-busy` set, and nobody can start a second hold in the meantime. The label function gets `{ busy }` so it can say what's happening. If the promise rejects, the button goes back to idle and the error is still thrown, so your error handling sees it.
+Pass a function as `children` when the words should follow the hold. It receives `"idle"`, `"holding"` or `"confirmed"`.
+
+```tsx
+<HoldButton onConfirm={() => publish()}>
+  {(state) => (state === "confirmed" ? "Published" : "Hold to publish")}
+</HoldButton>;
+```
+
+`confirmed` lasts while you keep holding, and for a moment after you let go.
+
+### Wait for a request
+
+If the action is a request, return its promise. Until it settles, the button stays confirmed, sets `aria-busy`, and won't start another hold. The label function's second argument tells you when it's busy.
 
 ```tsx
 <HoldButton onConfirm={() => archiveProject()}>
@@ -40,27 +52,11 @@ If the action is a request, return its promise. The button stays confirmed and b
 </HoldButton>;
 ```
 
-### 2. Change the label as the hold progresses
+If the promise rejects, the button returns to idle and the error is rethrown, so your own error handling still sees it.
 
-`children` can be a function when the words should change as you hold. It receives `"idle"`, `"holding"`, or `"confirmed"`.
+### Restyle it
 
-```tsx
-<HoldButton onConfirm={() => publish()}>
-  {(state) => (state === "confirmed" ? "Published" : "Hold to publish")}
-</HoldButton>;
-```
-
-`confirmed` stays while you're still holding, then for a moment after you let go, and the button returns to `idle`.
-
-### 3. Restyle with CSS
-
-Font and color come from the page, so light and dark usually just work. Three custom properties cover the hold itself:
-
-- `--hold-fill` is the wash that reveals the progress. The default is the current text color mixed to 16% opacity.
-- `--hold-confirmed` is the solid color once the hold completes. The default is the current text color. When you let go, it fades out.
-- `--hold-confirmed-text` is the label color on top of it. By default the label turns white or black, whichever is easier to read on `--hold-confirmed`. Browsers without relative colors use the page background (`Canvas`).
-
-The corner radius is `0.5em` until a class replaces it.
+Font and color come from the page, so light and dark themes usually work as they are. Three custom properties cover the hold itself:
 
 ```css
 .send {
@@ -76,7 +72,7 @@ The corner radius is `0.5em` until a class replaces it.
 </HoldButton>;
 ```
 
-`className` goes on the button. The built-in CSS sits in `@layer components` (as `components.hold-button`), the same layer Tailwind uses for components. Your classes and Tailwind utilities win, and Tailwind's reset doesn't flatten the button.
+`className` goes on the `<button>`. The built-in styles live in `@layer components`, the layer Tailwind uses for components, so your classes and Tailwind utilities override them, and Tailwind's reset leaves the button intact.
 
 ```tsx
 <HoldButton
@@ -87,9 +83,9 @@ The corner radius is `0.5em` until a class replaces it.
 </HoldButton>;
 ```
 
-`data-state` is `"idle"`, `"holding"`, or `"confirmed"` if you want to style each phase yourself. `data-disabled` is set while the button is disabled.
+### Put it where the damage happens
 
-Put the button at the end of the row it will destroy. A click on that row can still do something else, like open the project. A finished hold does not.
+Put the button at the end of the row it removes. A click on the row can still open the project. A completed hold doesn't also open it.
 
 ```tsx
 <div className="row" onClick={openProject}>
@@ -101,47 +97,66 @@ Put the button at the end of the row it will destroy. A click on that row can st
 </div>;
 ```
 
-### 4. Keep your own event handlers
+## API
 
-Other button props are passed through. `onClick` isn't one of them, since a click isn't the action.
+### Props
 
-If you pass `onPointerDown`, `onKeyDown`, or another handler the button uses, yours runs first. Call `preventDefault` and the hold never starts. A `ref` points at the real `<button>`.
+| Prop        | Type                                            |                                                                                        |
+| ----------- | ----------------------------------------------- | -------------------------------------------------------------------------------------- |
+| `onConfirm` | `() => unknown`                                 | Runs when a hold completes. Return a promise to keep the button busy until it settles. |
+| `children`  | `ReactNode` or `(state, { busy }) => ReactNode` | The label.                                                                             |
+| `messages`  | `{ hint?, confirmed?, again? }`                 | Screen reader text. See [Accessibility](#accessibility).                               |
+
+Every other `<button>` prop is passed through, and `type` defaults to `"button"`. `onClick` is left out on purpose, because a click isn't the action. If you pass a handler the button also uses, like `onPointerDown` or `onKeyDown`, yours runs first, and calling `preventDefault` stops the hold from starting. `ref` points at the `<button>`.
+
+### CSS custom properties
+
+| Property                | Default                                                                                                      |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------ |
+| `--hold-fill`           | The text color at 16%. The wash that shows progress.                                                         |
+| `--hold-confirmed`      | The text color. The solid color when a hold completes. It fades out when you let go.                         |
+| `--hold-confirmed-text` | White or black, whichever reads better on `--hold-confirmed`. Browsers without relative colors use `Canvas`. |
+
+Corners are `0.5em` until a class changes them.
+
+### Data attributes
+
+`data-state` is `"idle"`, `"holding"` or `"confirmed"`. `data-disabled` is set while the button is disabled. While a returned promise is pending, the button has `aria-busy="true"`.
 
 ## What it handles
 
 ### Pointer
 
-- Only the main pointer starts a hold: left click, or one finger. A second finger is ignored, even when it lifts.
-- The pointer is captured, so letting go still registers if your finger has slid off the button.
-- Drag off the button and the hold cancels. Sliding back on does not resume it, and releasing outside never confirms.
+- Only the main pointer starts a hold: a left click, or one finger. A second finger is ignored, even when it lifts.
+- The pointer is captured, so letting go still counts after your finger slides off.
+- Dragging off the button cancels the hold. Sliding back on doesn't resume it, and releasing outside never confirms.
 - A finger gets a few pixels of slack, and the whole 44px touch area counts as the button, so a steady thumb near the edge doesn't cancel.
-- If the pointer is cancelled, or something else takes over the pointer, the hold cancels.
-- On a phone, the long-press menu, text selection, and magnifier stay out of the way while you hold.
-- Scroll the button out from under your finger and the hold cancels.
-- On Android, a touch hold that confirms gives a short buzz. iPhones don't let the web do that.
+- A cancelled pointer, or another gesture taking over, cancels the hold.
+- Scrolling the button out from under your finger cancels the hold.
+- On a phone, the long-press menu, text selection and magnifier stay out of the way.
+- On Android, a touch hold that confirms gives a short buzz. iPhones don't let websites do that.
 
 ### Keyboard
 
-- Hold Space or Enter. A key that is already down won't start the timer again, and releasing a different key won't stop it.
-- Escape cancels a hold, whether it's a key or a pointer, and letting go of the key afterwards does nothing.
-- Shortcuts like Ctrl+Enter or Cmd+Enter don't start a hold, and don't click the button either.
-- A mouse hold keeps going when Safari takes focus off the button as you press it. Only a keyboard hold cancels when focus leaves.
+- Hold Space or Enter. Key repeat doesn't restart the timer, and releasing a different key doesn't stop it.
+- Escape cancels a hold, from the keyboard or a pointer. Releasing the key afterwards does nothing.
+- Shortcuts like Ctrl+Enter or Cmd+Enter neither start a hold nor click the button.
+- Moving focus away cancels a keyboard hold. A mouse hold keeps going, because Safari takes focus off a button as you press it.
 
 ### Page
 
-- Tab away, switch windows, or hide the tab, and an unfinished hold cancels. It won't finish in the background.
-- `disabled` stops a hold that's already going, and a disabled button can't start one.
-- It never submits or resets its form, even with `type="submit"`. A quick click can't send the form.
-- A short press still clicks, and that click bubbles. It does not confirm. After a finished hold, letting go doesn't click, so no listener above it runs as well, React or not.
-- Return a promise from `onConfirm` and a second hold can't start until it settles.
-- If the button unmounts mid-hold, the timer is cleared. `onConfirm` does not run after it's gone.
-- With reduced motion, the button doesn't shrink and an early release snaps back. The fill still moves, because that's how you can tell the hold is working.
+- Switching tabs or windows cancels an unfinished hold. It never completes in the background.
+- `disabled` cancels a hold in progress, and a disabled button can't start one.
+- A short press still clicks, and the click bubbles. After a completed hold, the click is stopped, so no listener above it runs, React or not.
+- It never submits or resets its form, even with `type="submit"`.
+- If the button unmounts mid-hold, nothing runs afterwards.
+- With reduced motion, the button doesn't shrink and an early release snaps back. The fill still moves, because it's how you can tell the hold is working.
 
 ## Accessibility
 
-It's a normal `<button>`, with a focus ring you can see. The name is the label. Pass `aria-label` or `aria-labelledby` if the name should be something else. A hidden note, "Press and hold to confirm", is attached with `aria-describedby`. Pass your own and your ids come first. When the hold finishes, a live region right after the button says "Confirmed". It stays said even if you disable the button the moment it confirms.
+It's a real `<button>` with a visible focus ring. Its name is the label, unless you pass `aria-label` or `aria-labelledby`. A hidden hint, "Press and hold to confirm", is attached with `aria-describedby`, after any ids you pass. When a hold completes, a live region right after the button announces "Confirmed". The announcement stands even if the button is disabled the moment it confirms.
 
-The hint, the confirmation and the arming message are English until you pass `messages`. Anything you leave out stays English.
+All three phrases are English until you pass `messages`. Anything you leave out stays English.
 
 ```tsx
 <HoldButton
@@ -156,38 +171,42 @@ The hint, the confirmation and the arming message are English until you pass `me
 </HoldButton>;
 ```
 
-On a touch screen the tappable area is at least 44px tall. The button doesn't grow to get there.
+On touch screens the tap target is at least 44px tall, without making the button bigger. In forced colors mode, the fill and the confirmed state use `Highlight`, since a faint wash could disappear. When someone asks for more contrast, the fill gets stronger.
 
-A faint wash can disappear in forced colors, so the fill and the confirmed state use `Highlight`. If the person has asked for more contrast, the fill gets stronger too.
+### Screen readers
 
-Screen readers usually activate a button with a single click, not a 1.5 second hold. So a click that arrives without a press on the button first is treated as a deliberate activation, not a misclick. The first one arms the button and says "Activate again to confirm" (`messages.again`). A second one within 10 seconds confirms. Moving focus away, or waiting longer, starts over.
+Screen readers usually activate a button with a single click, not a 1.5 second hold. So a click that comes without a press on the button is treated as deliberate. The first one arms the button and announces "Activate again to confirm". A second one within 10 seconds confirms. Moving focus away, or waiting longer, starts over.
 
-A mouse click or a tap always comes with a press, so it never arms anything. A double-click or a double-tap still can't delete. Code that calls `button.click()` twice takes the same path a screen reader does.
+Mouse clicks and taps always come with a press, so they never arm the button. A double-click or double-tap still can't delete anything. Code that calls `button.click()` twice goes down the same path as a screen reader.
 
-- NVDA and JAWS in browse mode, and macOS VoiceOver with VO+Space, send a plain click. Activate twice to confirm. In focus or pass-through mode, holding Space or Enter works like it does for everyone.
-- iOS VoiceOver and TalkBack can send a double-tap as a short tap. When they do, it doesn't arm. Double-tap and hold passes a real hold through, and that confirms.
-- This was tested with the clicks and taps a browser receives, not with every screen reader and browser pair. If one behaves differently, please open an issue.
+- NVDA and JAWS in browse mode, and VoiceOver on macOS with VO+Space, send a plain click: activate twice to confirm. In focus or pass-through mode, holding Space or Enter works as it does for everyone.
+- VoiceOver on iOS and TalkBack may send a double-tap as a short tap, which doesn't arm the button. Double-tap and hold passes a real hold through, and that confirms.
+- This was tested with the events browsers receive, not with every screen reader and browser pairing. If one behaves differently, please open an issue.
+
+## Server rendering
+
+On React 19 the styles render with the page, so a server-rendered button, including in the Next.js App Router, is styled before any JavaScript runs. On React 18 they're added when the first button mounts, so until then it looks like a plain button. The hidden screen reader text never shows either way.
+
+The styles arrive as a `<style>` element, and server-rendered markup hides the screen reader text with inline `style` attributes. A strict Content Security Policy has to allow inline styles (`style-src 'unsafe-inline'`). Without that, the button still works but looks like a plain browser button.
 
 ## Development
 
-The repo is a bun workspace. The component lives in `packages/onpurpose`. The docs site lives in `apps/docs`.
+This is a bun workspace. The component is in `packages/onpurpose` and the docs site in `apps/docs`.
 
-```sh
-bun install
-bun run dev
-bun run lint
-bun run typecheck
-bun run test
-bun run test:e2e
-bun run build
-bun run size
-bun run publint
-bun run attw
-```
+| Command             |                                                                              |
+| ------------------- | ---------------------------------------------------------------------------- |
+| `bun install`       | Install dependencies.                                                        |
+| `bun run dev`       | Start the docs site.                                                         |
+| `bun run test`      | Run the unit tests.                                                          |
+| `bun run test:e2e`  | Run the browser tests against the docs site in Chromium, Firefox and WebKit. |
+| `bun run lint`      | Lint and check formatting.                                                   |
+| `bun run typecheck` | Type-check every workspace.                                                  |
+| `bun run build`     | Build the package and the docs site.                                         |
+| `bun run size`      | Check the gzip budget.                                                       |
+| `bun run publint`   | Check the published package.                                                 |
+| `bun run attw`      | Check that the types resolve.                                                |
 
-`bun run dev` starts the docs site. `bun run test` is the unit suite. `bun run test:e2e` runs the browser checks against that page. `bun run size` enforces the gzip budget. `bun run publint` and `bun run attw` check the package that gets published.
-
-Releases go out through Changesets and the Release workflow. That workflow publishes with npm provenance once the package has a trusted publisher on npm.
+Releases go out through Changesets and the Release workflow, which publishes with npm provenance.
 
 ## License
 
