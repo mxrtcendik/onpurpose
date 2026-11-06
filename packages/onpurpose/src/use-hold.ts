@@ -9,20 +9,34 @@ import {
   useRef,
   useState,
 } from "react";
-import { HOLD_MS } from "./styles";
+import { HOLD_MS, TARGET_PX } from "./styles";
 
 /** `idle` before a hold, `holding` while it is in progress, and `confirmed` after it completes. */
 export type HoldButtonState = "idle" | "holding" | "confirmed";
 
 const DWELL_MS = 700;
+const TOUCH_SLOP_PX = 8;
 
 const useIsoLayoutEffect = typeof document === "undefined" ? useEffect : useLayoutEffect;
 
-type Gesture = { kind: "pointer"; pointerId: number } | { kind: "key"; key: string };
+type Gesture =
+  | { kind: "pointer"; pointerId: number; slop: number; coarse: boolean }
+  | { kind: "key"; key: string };
 
-function pointerIsInside(x: number, y: number, node: HTMLElement) {
+function pointerIsInside(
+  x: number,
+  y: number,
+  node: HTMLElement,
+  { slop, coarse }: { slop: number; coarse: boolean },
+) {
   const rect = node.getBoundingClientRect();
-  return x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom;
+  const reach = coarse ? Math.max(0, (TARGET_PX - rect.height) / 2) : 0;
+  return (
+    x >= rect.left - slop &&
+    x <= rect.right + slop &&
+    y >= rect.top - reach - slop &&
+    y <= rect.bottom + reach + slop
+  );
 }
 
 export function useHoldButton({
@@ -126,7 +140,9 @@ export function useHoldButton({
         const active = gestureRef.current;
         const node = buttonRef.current;
         if (active?.kind !== "pointer" || !node) return;
-        if (!pointerIsInside(pointRef.current.x, pointRef.current.y, node)) endGestureRef.current();
+        if (!pointerIsInside(pointRef.current.x, pointRef.current.y, node, active)) {
+          endGestureRef.current();
+        }
       };
       document.addEventListener("visibilitychange", onVisibility);
       window.addEventListener("blur", onWindowBlur);
@@ -176,7 +192,12 @@ export function useHoldButton({
     suppressClickRef.current = false;
     if (disabled || !event.isPrimary || event.button !== 0 || gestureRef.current) return;
     pointRef.current = { x: event.clientX, y: event.clientY };
-    gestureRef.current = { kind: "pointer", pointerId: event.pointerId };
+    gestureRef.current = {
+      kind: "pointer",
+      pointerId: event.pointerId,
+      slop: event.pointerType === "mouse" ? 0 : TOUCH_SLOP_PX,
+      coarse: window.matchMedia?.("(pointer: coarse)").matches ?? false,
+    };
     try {
       event.currentTarget.setPointerCapture(event.pointerId);
     } catch {
@@ -189,7 +210,7 @@ export function useHoldButton({
     const gesture = gestureRef.current;
     if (gesture?.kind !== "pointer" || gesture.pointerId !== event.pointerId) return;
     pointRef.current = { x: event.clientX, y: event.clientY };
-    if (!pointerIsInside(event.clientX, event.clientY, event.currentTarget)) endGesture();
+    if (!pointerIsInside(event.clientX, event.clientY, event.currentTarget, gesture)) endGesture();
   };
 
   const matchesPointer = (event: PointerEvent<HTMLButtonElement>) => {

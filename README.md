@@ -101,6 +101,7 @@ If you pass `onPointerDown`, `onKeyDown`, or another handler the button uses, yo
 - Only the main pointer starts a hold: left click, or one finger. A second finger is ignored, even when it lifts.
 - The pointer is captured, so letting go still registers if your finger has slid off the button.
 - Drag off the button and the hold cancels. Sliding back on does not resume it, and releasing outside never confirms.
+- A finger gets a few pixels of slack, and the whole 44px touch area counts as the button, so a steady thumb near the edge doesn't cancel.
 - If the pointer is cancelled, or something else takes over the pointer, the hold cancels.
 - On a phone, the long-press menu, text selection, and magnifier stay out of the way while you hold.
 - Scroll the button out from under your finger and the hold cancels.

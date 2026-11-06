@@ -1,6 +1,7 @@
 import { useInsertionEffect } from "react";
 
 export const HOLD_MS = 1500;
+export const TARGET_PX = 44;
 
 const RETRACT_MS = 200;
 const PRESS_MS = 160;
@@ -95,7 +96,7 @@ const CSS = `
     .onpurpose::before {
       content: "";
       position: absolute;
-      inset-block: min(0px, calc((100% - 44px) / 2));
+      inset-block: min(0px, calc((100% - ${TARGET_PX}px) / 2));
       inset-inline: 0;
     }
   }

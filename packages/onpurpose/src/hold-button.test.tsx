@@ -153,6 +153,39 @@ describe("HoldButton", () => {
     expect(onConfirm).not.toHaveBeenCalled();
   });
 
+  it("keeps a touch hold that starts in the extended hit area and jitters", () => {
+    const coarse = vi
+      .spyOn(window, "matchMedia")
+      .mockImplementation(
+        (query) => ({ matches: query === "(pointer: coarse)" }) as MediaQueryList,
+      );
+    const { onConfirm, button } = renderButton();
+
+    point("pointerDown", button, { pointerType: "touch", clientX: 80, clientY: -1 });
+    point("pointerMove", button, { pointerType: "touch", clientX: 82, clientY: -2 });
+    point("pointerMove", button, { pointerType: "touch", clientX: 164, clientY: 46 });
+    expect(button).toHaveAttribute("data-state", "holding");
+    advance(1500);
+    expect(onConfirm).toHaveBeenCalledOnce();
+    point("pointerUp", button, { pointerType: "touch" });
+    advance(1000);
+
+    point("pointerDown", button, { pointerType: "touch", clientX: 80, clientY: 20 });
+    point("pointerMove", button, { pointerType: "touch", clientX: 80, clientY: -11 });
+    expect(button).toHaveAttribute("data-state", "idle");
+    coarse.mockRestore();
+  });
+
+  it("gives a mouse no slack past the edge", () => {
+    const { button } = renderButton();
+
+    point("pointerDown", button);
+    point("pointerMove", button, { clientX: 160, clientY: 40 });
+    expect(button).toHaveAttribute("data-state", "holding");
+    point("pointerMove", button, { clientX: 161, clientY: 40 });
+    expect(button).toHaveAttribute("data-state", "idle");
+  });
+
   it("cancels when a scroll moves the button off the pointer", () => {
     const { onConfirm, button } = renderButton();
 

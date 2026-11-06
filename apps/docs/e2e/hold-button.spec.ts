@@ -220,6 +220,34 @@ test.describe("touch", () => {
     await expect(hold).toHaveAttribute("data-state", "idle");
     await expect(page.getByTestId("confirms")).toHaveAttribute("data-count", "1");
   });
+
+  test("a touch in the extended hit area survives finger jitter", async ({ page }) => {
+    const hold = await button(page);
+    await hold.evaluate((element) => {
+      element.style.fontSize = "12px";
+    });
+    const box = await hold.boundingBox();
+    if (!box) throw new Error("Button has no box");
+    expect(box.height).toBeLessThan(44);
+    const x = box.x + box.width / 2;
+    const y = box.y - 3;
+    const session = await page.context().newCDPSession(page);
+    await session.send("Input.dispatchTouchEvent", {
+      type: "touchStart",
+      touchPoints: [{ x, y, id: 1 }],
+    });
+    await expect(hold).toHaveAttribute("data-state", "holding");
+    for (const dx of [1, -1, 2]) {
+      await session.send("Input.dispatchTouchEvent", {
+        type: "touchMove",
+        touchPoints: [{ x: x + dx, y: y - 1, id: 1 }],
+      });
+    }
+    await expect(hold).toHaveAttribute("data-state", "holding");
+    await expect(hold).toHaveAttribute("data-state", "confirmed", { timeout: 3_000 });
+    await session.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
+    await expect(page.getByTestId("confirms")).toHaveAttribute("data-count", "1");
+  });
 });
 
 test.describe("reduced motion", () => {
