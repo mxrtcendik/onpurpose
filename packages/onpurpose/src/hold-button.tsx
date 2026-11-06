@@ -6,23 +6,14 @@ import { type HoldButtonState, useHoldButton } from "./use-hold";
 export type { HoldButtonState };
 
 export type HoldButtonMessages = {
-  /** Read after the label, telling people how to use the button. */
   hint?: string;
-  /** Announced when a hold confirms. */
   confirmed?: string;
-  /** Announced when a screen reader activates the button once, which arms it. */
   again?: string;
 };
 
 export type HoldButtonProps = Omit<ComponentPropsWithRef<"button">, "children" | "onClick"> & {
-  /**
-   * Runs once, when the hold finishes. Return a promise and the button stays confirmed and
-   * busy until it settles.
-   */
   onConfirm: () => void | PromiseLike<unknown>;
-  /** The label. Pass a function to change it with the hold state. */
   children: ReactNode | ((state: HoldButtonState, info: { busy: boolean }) => ReactNode);
-  /** Text for screen readers. Each one defaults to English. */
   messages?: HoldButtonMessages;
 };
 
@@ -47,11 +38,6 @@ function assignRef<T>(ref: Ref<T> | undefined, value: T | null) {
   if (typeof ref === "function") ref(value);
   else if (ref) ref.current = value;
 }
-
-/**
- * A button that fires `onConfirm` only after it is held down.
- * Letting go early retracts the fill and runs nothing.
- */
 export const HoldButton = forwardRef<HTMLButtonElement, HoldButtonProps>(function HoldButton(
   {
     onConfirm,

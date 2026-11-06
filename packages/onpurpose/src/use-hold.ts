@@ -10,8 +10,6 @@ import {
   useState,
 } from "react";
 import { HOLD_MS, TARGET_PX } from "./styles";
-
-/** `idle` before a hold, `holding` while it is in progress, and `confirmed` after it completes. */
 export type HoldButtonState = "idle" | "holding" | "confirmed";
 
 const DWELL_MS = 700;
@@ -116,11 +114,8 @@ export function useHoldButton({
 
   const releasePointer = (gesture: Gesture | null) => {
     if (gesture?.kind !== "pointer") return;
-    try {
-      buttonRef.current?.releasePointerCapture(gesture.pointerId);
-    } catch {
-      // The pointer is already gone.
-    }
+    const node = buttonRef.current;
+    if (node?.hasPointerCapture(gesture.pointerId)) node.releasePointerCapture(gesture.pointerId);
   };
 
   const goIdle = () => {
@@ -279,9 +274,7 @@ export function useHoldButton({
     };
     try {
       event.currentTarget.setPointerCapture(event.pointerId);
-    } catch {
-      // Capture can fail if the pointer is already gone. The hold still tracks the id.
-    }
+    } catch {}
     beginHold();
   };
 

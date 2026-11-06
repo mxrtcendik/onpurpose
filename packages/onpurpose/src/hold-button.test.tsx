@@ -951,7 +951,6 @@ describe("HoldButton", () => {
     const parentClick = vi.fn();
     const onConfirm = vi.fn();
     render(
-      // The parent is the surface under test, not a control.
       // biome-ignore lint/a11y/noStaticElementInteractions: parent click is the behavior under test
       // biome-ignore lint/a11y/useKeyWithClickEvents: parent click is the behavior under test
       <div onClick={parentClick}>

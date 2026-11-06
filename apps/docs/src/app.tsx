@@ -113,7 +113,6 @@ function ProjectRow() {
   const [removed, setRemoved] = useState(false);
 
   return (
-    // The row is the ancestor that receives a bubbled click. The button is the keyboard control.
     // biome-ignore lint/a11y/noStaticElementInteractions: row receives the bubbled click
     // biome-ignore lint/a11y/useKeyWithClickEvents: the remove button is the keyboard control
     <div
