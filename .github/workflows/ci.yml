@@ -18,6 +18,7 @@ jobs:
         with:
           node-version: 24
       - run: bun install --frozen-lockfile
+      - run: cmp README.md packages/onpurpose/README.md
       - run: bun run lint
       - run: bun run typecheck
       - run: bun run test

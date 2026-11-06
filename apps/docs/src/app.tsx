@@ -82,7 +82,8 @@ const handled = [
       "Tab away, switch windows, or hide the tab, and an unfinished hold cancels. It won't finish in the background.",
       "disabled stops a hold that's already going, and a disabled button can't start one.",
       "Handlers you pass run first. Call preventDefault and the hold never starts.",
-      "A short press still clicks, and that click bubbles. It does not confirm. After a finished hold, letting go doesn't click, so a parent handler won't run as well.",
+      "A short press still clicks, and that click bubbles. It does not confirm. After a finished hold, letting go doesn't click, so no listener above it runs as well, React or not.",
+      "Return a promise from onConfirm and a second hold can't start until it settles.",
       'It never submits or resets its form, even with type="submit". A quick click can\'t send the form.',
       "If the button unmounts mid-hold, the timer is cleared. onConfirm does not run after it's gone.",
       "With reduced motion, the button doesn't shrink and an early release snaps back. The fill still moves, because that's how you can tell the hold is working.",
@@ -189,6 +190,12 @@ export function App() {
           Router included) is styled before any JavaScript runs. On React 18 they're added when the
           first button mounts, so a server-rendered button looks plain until then. Either way, the
           hidden screen reader text never shows.
+        </p>
+        <p>
+          The styles come as a <code>&lt;style&gt;</code> element, and server-rendered markup hides
+          the screen reader text with inline <code>style</code> attributes. A strict Content
+          Security Policy has to allow inline styles (<code>style-src 'unsafe-inline'</code>).
+          Without that, the button still works but looks like a plain browser button.
         </p>
       </section>
 

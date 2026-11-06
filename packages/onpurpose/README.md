@@ -20,6 +20,8 @@ React 18.3 and 19. No provider, and no stylesheet to import. It picks up the fon
 
 On React 19 its styles render with the page, so a server-rendered button (Next.js App Router included) is styled before any JavaScript runs. On React 18 they're added when the first button mounts, so a server-rendered button looks plain until then. Either way, the hidden screen reader text never shows.
 
+The styles come as a `<style>` element, and server-rendered markup hides the screen reader text with inline `style` attributes. A strict Content Security Policy has to allow inline styles (`style-src 'unsafe-inline'`). Without that, the button still works but looks like a plain browser button.
+
 ## Use it
 
 ### 1. Pass the action
@@ -129,7 +131,8 @@ If you pass `onPointerDown`, `onKeyDown`, or another handler the button uses, yo
 - Tab away, switch windows, or hide the tab, and an unfinished hold cancels. It won't finish in the background.
 - `disabled` stops a hold that's already going, and a disabled button can't start one.
 - It never submits or resets its form, even with `type="submit"`. A quick click can't send the form.
-- A short press still clicks, and that click bubbles. It does not confirm. After a finished hold, letting go doesn't click, so a parent handler won't run as well.
+- A short press still clicks, and that click bubbles. It does not confirm. After a finished hold, letting go doesn't click, so no listener above it runs as well, React or not.
+- Return a promise from `onConfirm` and a second hold can't start until it settles.
 - If the button unmounts mid-hold, the timer is cleared. `onConfirm` does not run after it's gone.
 - With reduced motion, the button doesn't shrink and an early release snaps back. The fill still moves, because that's how you can tell the hold is working.
 
