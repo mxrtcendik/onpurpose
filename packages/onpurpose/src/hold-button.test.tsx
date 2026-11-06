@@ -754,6 +754,28 @@ describe("HoldButton", () => {
     expect(onReset).not.toHaveBeenCalled();
   });
 
+  it("keeps the click after a confirm from native listeners too", () => {
+    const host = document.createElement("div");
+    document.body.append(host);
+    const nativeClicks = vi.fn();
+    host.addEventListener("click", nativeClicks);
+    render(<HoldButton onConfirm={() => {}}>Hold to delete</HoldButton>, { container: host });
+    const button = screen.getByRole("button", { name: "Hold to delete" });
+
+    point("pointerDown", button);
+    advance(400);
+    point("pointerUp", button);
+    fireEvent.click(button);
+    expect(nativeClicks).toHaveBeenCalledOnce();
+
+    point("pointerDown", button);
+    advance(1500);
+    point("pointerUp", button);
+    fireEvent.click(button);
+    expect(nativeClicks).toHaveBeenCalledOnce();
+    host.remove();
+  });
+
   it("blocks the context menu while a hold is in progress", () => {
     const { button } = renderButton();
     point("pointerDown", button);

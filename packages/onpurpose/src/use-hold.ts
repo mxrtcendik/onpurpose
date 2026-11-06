@@ -302,12 +302,18 @@ export function useHoldButton({
     if (gestureRef.current) event.preventDefault();
   };
 
-  const onClick = (event: MouseEvent<HTMLButtonElement>) => {
-    event.preventDefault();
-    if (!suppressClickRef.current) return;
-    suppressClickRef.current = false;
-    event.stopPropagation();
-  };
+  useEffect(() => {
+    const node = buttonRef.current;
+    if (!node) return;
+    const onClick = (event: globalThis.MouseEvent) => {
+      event.preventDefault();
+      if (!suppressClickRef.current) return;
+      suppressClickRef.current = false;
+      event.stopPropagation();
+    };
+    node.addEventListener("click", onClick);
+    return () => node.removeEventListener("click", onClick);
+  }, []);
 
   return {
     phase,
@@ -323,6 +329,5 @@ export function useHoldButton({
     onKeyUp,
     onBlur,
     onContextMenu,
-    onClick,
   };
 }

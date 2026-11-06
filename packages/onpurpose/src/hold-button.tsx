@@ -109,7 +109,6 @@ export const HoldButton = forwardRef<HTMLButtonElement, HoldButtonProps>(functio
         aria-label={ariaLabel}
         aria-labelledby={labelledBy}
         aria-describedby={describedBy}
-        onClick={hold.onClick}
         onPointerDown={(event) => runUnlessPrevented(onPointerDown, event, hold.onPointerDown)}
         onPointerMove={(event) => runUnlessPrevented(onPointerMove, event, hold.onPointerMove)}
         onPointerUp={(event) => runUnlessPrevented(onPointerUp, event, hold.onPointerUp)}
