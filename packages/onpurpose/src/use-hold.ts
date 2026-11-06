@@ -19,6 +19,14 @@ const TOUCH_SLOP_PX = 8;
 
 const useIsoLayoutEffect = typeof document === "undefined" ? useEffect : useLayoutEffect;
 
+function isThenable(value: unknown): value is PromiseLike<unknown> {
+  return (
+    (typeof value === "object" || typeof value === "function") &&
+    value !== null &&
+    typeof (value as PromiseLike<unknown>).then === "function"
+  );
+}
+
 type Gesture =
   | { kind: "pointer"; pointerId: number; slop: number; coarse: boolean }
   | { kind: "key"; key: string };
@@ -45,7 +53,7 @@ export function useHoldButton({
   confirmedMessage,
 }: {
   disabled: boolean | undefined;
-  onConfirm: () => void;
+  onConfirm: () => unknown;
   confirmedMessage: string;
 }) {
   const buttonRef = useRef<HTMLButtonElement>(null);
@@ -62,9 +70,11 @@ export function useHoldButton({
   const endGestureRef = useRef<() => void>(() => {});
   const abortRef = useRef<() => void>(() => {});
   const suppressClickRef = useRef(false);
+  const pendingRef = useRef(0);
 
   const [phase, setPhase] = useState<HoldButtonState>("idle");
   const [announcement, setAnnouncement] = useState("");
+  const [busy, setBusy] = useState(false);
 
   onConfirmRef.current = onConfirm;
   confirmedMessageRef.current = confirmedMessage;
@@ -98,6 +108,14 @@ export function useHoldButton({
     setPhaseBoth("idle");
   };
 
+  const dwellThenIdle = () => {
+    clearDwell();
+    dwellTimerRef.current = window.setTimeout(() => {
+      if (!mountedRef.current || gestureRef.current || pendingRef.current) return;
+      if (phaseRef.current === "confirmed") setPhaseBoth("idle");
+    }, DWELL_MS);
+  };
+
   const endGesture = () => {
     const gesture = gestureRef.current;
     if (!gesture) return;
@@ -106,14 +124,36 @@ export function useHoldButton({
     window.clearTimeout(holdTimerRef.current);
     releasePointer(gesture);
     if (phaseRef.current === "confirmed") {
-      clearDwell();
-      dwellTimerRef.current = window.setTimeout(() => {
-        if (!mountedRef.current || gestureRef.current || phaseRef.current !== "confirmed") return;
-        setPhaseBoth("idle");
-      }, DWELL_MS);
+      if (!pendingRef.current) dwellThenIdle();
       return;
     }
     if (phaseRef.current === "holding") goIdle();
+  };
+
+  const settle = (token: number, ok: boolean) => {
+    if (!mountedRef.current || pendingRef.current !== token) return;
+    pendingRef.current = 0;
+    setBusy(false);
+    if (gestureRef.current) return;
+    if (ok) dwellThenIdle();
+    else goIdle();
+  };
+
+  const confirm = () => {
+    setPhaseBoth("confirmed");
+    setAnnouncement(confirmedMessageRef.current);
+    const result = onConfirmRef.current();
+    if (!isThenable(result)) return;
+    const token = pendingRef.current + 1;
+    pendingRef.current = token;
+    setBusy(true);
+    Promise.resolve(result).then(
+      () => settle(token, true),
+      (error: unknown) => {
+        settle(token, false);
+        throw error;
+      },
+    );
   };
 
   const abort = () => {
@@ -157,9 +197,7 @@ export function useHoldButton({
     }
     holdTimerRef.current = window.setTimeout(() => {
       if (!mountedRef.current || phaseRef.current !== "holding") return;
-      setPhaseBoth("confirmed");
-      setAnnouncement(confirmedMessageRef.current);
-      onConfirmRef.current();
+      confirm();
     }, HOLD_MS);
   };
 
@@ -197,7 +235,8 @@ export function useHoldButton({
 
   const onPointerDown = (event: PointerEvent<HTMLButtonElement>) => {
     suppressClickRef.current = false;
-    if (disabled || !event.isPrimary || event.button !== 0 || gestureRef.current) return;
+    if (disabled || pendingRef.current || !event.isPrimary || event.button !== 0) return;
+    if (gestureRef.current) return;
     pointRef.current = { x: event.clientX, y: event.clientY };
     gestureRef.current = {
       kind: "pointer",
@@ -238,7 +277,7 @@ export function useHoldButton({
 
   const onKeyDown = (event: KeyboardEvent<HTMLButtonElement>) => {
     if (event.key !== "Enter" && event.key !== " ") return;
-    if (disabled || event.repeat || gestureRef.current) {
+    if (disabled || pendingRef.current || event.repeat || gestureRef.current) {
       event.preventDefault();
       return;
     }
@@ -272,6 +311,7 @@ export function useHoldButton({
 
   return {
     phase,
+    busy,
     announcement,
     fillRef,
     setButtonNode,

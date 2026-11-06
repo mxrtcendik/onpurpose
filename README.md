@@ -28,7 +28,15 @@ On React 19 its styles render with the page, so a server-rendered button (Next.j
 
 The hold is 1.5 seconds, and that time isn't a prop. The fill crosses the button over those same 1.5 seconds, so you can see how close you are. Let go and it eases back over 200ms. `onConfirm` doesn't run. While you're pressing, the button scales to `0.97`.
 
-`onConfirm` returns right away. If the work is a request, the button is idle again while that request is still going, and someone can hold it a second time. Disable it yourself until the request finishes.
+If the action is a request, return its promise. The button stays confirmed and busy until it settles, with `aria-busy` set, and nobody can start a second hold in the meantime. The label function gets `{ busy }` so it can say what's happening. If the promise rejects, the button goes back to idle and the error is still thrown, so your error handling sees it.
+
+```tsx
+<HoldButton onConfirm={() => archiveProject()}>
+  {(state, { busy }) =>
+    busy ? "Archiving…" : state === "confirmed" ? "Archived" : "Hold to archive"
+  }
+</HoldButton>;
+```
 
 ### 2. Change the label as the hold progresses
 

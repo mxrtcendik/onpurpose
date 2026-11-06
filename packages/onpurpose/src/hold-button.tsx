@@ -13,10 +13,13 @@ export type HoldButtonMessages = {
 };
 
 export type HoldButtonProps = Omit<ComponentPropsWithRef<"button">, "children" | "onClick"> & {
-  /** Runs once, when the hold finishes. */
-  onConfirm: () => void;
+  /**
+   * Runs once, when the hold finishes. Return a promise and the button stays confirmed and
+   * busy until it settles.
+   */
+  onConfirm: () => void | PromiseLike<unknown>;
   /** The label. Pass a function to change it with the hold state. */
-  children: ReactNode | ((state: HoldButtonState) => ReactNode);
+  children: ReactNode | ((state: HoldButtonState, info: { busy: boolean }) => ReactNode);
   /** Text for screen readers. Each one defaults to English. */
   messages?: HoldButtonMessages;
 };
@@ -87,13 +90,15 @@ export const HoldButton = forwardRef<HTMLButtonElement, HoldButtonProps>(functio
   );
 
   const describedBy = [ariaDescribedBy, hintId].filter(Boolean).join(" ");
-  const label = typeof children === "function" ? children(hold.phase) : children;
+  const label =
+    typeof children === "function" ? children(hold.phase, { busy: hold.busy }) : children;
   const labelledBy = ariaLabelledBy ?? (ariaLabel ? undefined : labelId);
 
   return (
     <>
       <HoldButtonStyles />
       <button
+        aria-busy={hold.busy || undefined}
         {...props}
         ref={setButtonRef}
         type={type}

@@ -93,6 +93,22 @@ test("mouse hold confirms once", async ({ page }) => {
   await expect(page.getByTestId("confirms")).toHaveAttribute("data-count", "1");
 });
 
+test("a returned promise keeps the button busy until it settles", async ({ page }) => {
+  const hold = page.getByRole("button", { name: "Hold to archive" });
+  await hold.scrollIntoViewIfNeeded();
+  await press(page, hold);
+  const archiving = page.getByRole("button", { name: "Archiving…" });
+  await expect(archiving).toHaveAttribute("aria-busy", "true", { timeout: 3_000 });
+  await page.mouse.up();
+  await expect(archiving).toHaveAttribute("data-state", "confirmed");
+  const archived = page.getByRole("button", { name: "Archived" });
+  await expect(archived).not.toHaveAttribute("aria-busy");
+  await expect(page.getByRole("button", { name: "Hold to archive" })).toHaveAttribute(
+    "data-state",
+    "idle",
+  );
+});
+
 test("an early mouse release does not confirm", async ({ page }) => {
   const hold = await button(page);
   await press(page, hold);

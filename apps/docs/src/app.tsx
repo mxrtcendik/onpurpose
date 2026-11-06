@@ -13,6 +13,12 @@ const labelCode = `<HoldButton onConfirm={() => publish()}>
   {(state) => (state === "confirmed" ? "Published" : "Hold to publish")}
 </HoldButton>`;
 
+const asyncCode = `<HoldButton onConfirm={() => archiveProject()}>
+  {(state, { busy }) =>
+    busy ? "Archiving…" : state === "confirmed" ? "Archived" : "Hold to archive"
+  }
+</HoldButton>`;
+
 const variablesCode = `.send {
   color: light-dark(#087443, #8dcfb0);
   --hold-fill: color-mix(in srgb, currentColor 28%, transparent);
@@ -202,11 +208,24 @@ export function App() {
               in a little. It never submits or resets a form, even with <code>type="submit"</code>.
               If sending the form is the action, do it in <code>onConfirm</code>.
             </p>
+          </li>
+
+          <li className="step">
+            <h3>Wait for the work</h3>
             <p>
-              <code>onConfirm</code> returns right away. If the work is a request, the button is
-              idle again while that request is still going, and someone can hold it a second time.
-              Disable it yourself until the request finishes.
+              If the action is a request, return its promise. The button stays confirmed and busy
+              until it settles, with <code>aria-busy</code> set, and nobody can start a second hold
+              in the meantime. The label function gets <code>{"{ busy }"}</code> so it can say
+              what's happening. If the promise rejects, the button goes back to idle and the error
+              is still thrown, so your error handling sees it.
             </p>
+            <Figure code={asyncCode}>
+              <HoldButton onConfirm={() => new Promise((resolve) => setTimeout(resolve, 1200))}>
+                {(state, { busy }) =>
+                  busy ? "Archiving…" : state === "confirmed" ? "Archived" : "Hold to archive"
+                }
+              </HoldButton>
+            </Figure>
           </li>
 
           <li className="step">
