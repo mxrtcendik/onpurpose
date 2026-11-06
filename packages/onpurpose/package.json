@@ -67,7 +67,7 @@
     {
       "path": "dist/index.js",
       "import": "{ HoldButton }",
-      "limit": "4 kB",
+      "limit": "3.75 kB",
       "gzip": true,
       "ignore": [
         "react",
