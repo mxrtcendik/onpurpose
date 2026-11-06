@@ -1,25 +1,34 @@
 {
   "name": "onpurpose-workspace",
   "private": true,
-  "packageManager": "pnpm@12.16.1",
+  "packageManager": "bun@1.4.4",
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
   "engines": {
     "node": "^22.19.0 || ^24.11.0 || >=26"
   },
+  "trustedDependencies": [
+    "esbuild",
+    "workerd"
+  ],
   "scripts": {
-    "build": "pnpm -r build",
-    "dev": "pnpm --filter docs dev",
-    "typecheck": "pnpm -r typecheck",
-    "test": "pnpm -r --if-present test",
-    "test:e2e": "pnpm --filter docs test:e2e",
+    "build": "bun run --filter onpurpose build && bun run --filter docs build",
+    "dev": "bun run --filter docs dev",
+    "typecheck": "bun run --filter '*' typecheck",
+    "test": "bun run --filter '*' test",
+    "test:e2e": "bun run --filter docs test:e2e",
     "lint": "biome check .",
     "format": "biome check --write .",
-    "size": "pnpm --filter onpurpose build && pnpm --filter onpurpose exec size-limit",
-    "publint": "pnpm --filter onpurpose build && pnpm --filter onpurpose exec publint",
-    "attw": "pnpm --filter onpurpose build && pnpm --filter onpurpose exec attw --pack . --profile esm-only",
-    "release": "pnpm --filter onpurpose build && pnpm exec changeset publish"
+    "size": "bun run --filter onpurpose build && cd packages/onpurpose && bun x size-limit",
+    "publint": "bun run --filter onpurpose build && cd packages/onpurpose && bun x publint",
+    "attw": "bun run --filter onpurpose build && cd packages/onpurpose && bun x attw --pack . --profile esm-only",
+    "version": "changeset version && bun install",
+    "release": "bun run --filter onpurpose build && changeset publish"
   },
   "devDependencies": {
-    "@biomejs/biome": "2.6.4",
+    "@biomejs/biome": "2.6.5",
     "@changesets/cli": "3.0.3"
   }
 }

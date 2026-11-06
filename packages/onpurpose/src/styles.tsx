@@ -1,14 +1,10 @@
-import { useInsertionEffect } from "react";
-
-export const HOLD_MS = 1500;
-
-const RETRACT_MS = 200;
-const PRESS_MS = 160;
-const EASE = "cubic-bezier(0.23, 1, 0.32, 1)";
-const STYLE_ID = "onpurpose";
+import { type CSSProperties, useInsertionEffect, version } from "react";
+import { EASE, HOLD_MS, PRESS_MS, RETRACT_MS, TARGET_PX } from "./constants";
 
 const CSS = `
-@layer hold-button {
+@layer theme, base, components, utilities;
+
+@layer components.hold-button {
   .onpurpose {
     --e: ${EASE};
     --r: ${RETRACT_MS}ms;
@@ -24,6 +20,24 @@ const CSS = `
     touch-action: manipulation;
     user-select: none;
     -webkit-touch-callout: none;
+    isolation: isolate;
+  }
+
+  .onpurpose::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    border-radius: inherit;
+    background: var(--hold-confirmed, currentColor);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity var(--r) var(--e);
+  }
+
+  .onpurpose[data-state="confirmed"]::after {
+    opacity: 1;
+    transition: none;
   }
 
   .onpurpose:disabled {
@@ -53,14 +67,18 @@ const CSS = `
     transform: scale(0.97);
   }
 
-  .onpurpose[data-state="confirmed"] {
-    background: var(--hold-confirmed, currentColor);
+  .onpurpose[data-state="confirmed"] .onpurpose-frame {
+    color: var(--hold-confirmed-text, Canvas);
+    border-color: transparent;
   }
 
-  .onpurpose[data-state="confirmed"] .onpurpose-frame {
-    color: Canvas;
-    background: 0;
-    border-color: transparent;
+  @supports (color: oklch(from red l c h)) {
+    .onpurpose[data-state="confirmed"] .onpurpose-frame {
+      color: var(
+        --hold-confirmed-text,
+        oklch(from var(--hold-confirmed, currentColor) clamp(0, (0.6 - l) * 1000, 1) 0 0)
+      );
+    }
   }
 
   .onpurpose-fill {
@@ -82,20 +100,11 @@ const CSS = `
     transition: none;
   }
 
-  .onpurpose-sr {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    margin: -1px;
-    overflow: hidden;
-    clip-path: inset(50%);
-  }
-
   @media (pointer: coarse) {
     .onpurpose::before {
       content: "";
       position: absolute;
-      inset-block: min(0px, calc((100% - 44px) / 2));
+      inset-block: min(0px, calc((100% - ${TARGET_PX}px) / 2));
       inset-inline: 0;
     }
   }
@@ -122,7 +131,7 @@ const CSS = `
       background: Highlight;
     }
 
-    .onpurpose[data-state="confirmed"] {
+    .onpurpose::after {
       background: Highlight;
     }
 
@@ -133,12 +142,40 @@ const CSS = `
 }
 `.trim();
 
-export function useHoldButtonStyles() {
+function hash(text: string) {
+  let value = 5381;
+  for (let i = 0; i < text.length; i++) value = (value * 33) ^ text.charCodeAt(i);
+  return (value >>> 0).toString(36);
+}
+
+const STYLE_KEY = `onpurpose-${hash(CSS)}`;
+
+export const SR_ONLY: CSSProperties = {
+  position: "absolute",
+  width: 1,
+  height: 1,
+  margin: -1,
+  padding: 0,
+  border: 0,
+  overflow: "hidden",
+  clipPath: "inset(50%)",
+  whiteSpace: "nowrap",
+};
+
+const HOISTS_STYLES = !version.startsWith("18.");
+
+export function HoldButtonStyles() {
   useInsertionEffect(() => {
-    if (document.getElementById(STYLE_ID)) return;
+    if (HOISTS_STYLES || document.querySelector(`style[data-onpurpose="${STYLE_KEY}"]`)) return;
     const style = document.createElement("style");
-    style.id = STYLE_ID;
+    style.dataset.onpurpose = STYLE_KEY;
     style.textContent = CSS;
     document.head.appendChild(style);
   }, []);
+
+  return HOISTS_STYLES ? (
+    <style href={STYLE_KEY} precedence="onpurpose">
+      {CSS}
+    </style>
+  ) : null;
 }
