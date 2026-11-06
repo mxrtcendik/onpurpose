@@ -257,6 +257,31 @@ test("Tailwind utilities win and its reset doesn't flatten the button", async ({
   }
 });
 
+test("Escape cancels a hold and shortcuts never start one", async ({ page }) => {
+  const hold = await button(page);
+  const status = hold.locator("xpath=following-sibling::*[1]");
+  await hold.focus();
+  await page.keyboard.down("Space");
+  await expect(hold).toHaveAttribute("data-state", "holding");
+  await page.keyboard.press("Escape");
+  await expect(hold).toHaveAttribute("data-state", "idle");
+  await page.keyboard.up("Space");
+
+  await press(page, hold);
+  await expect(hold).toHaveAttribute("data-state", "holding");
+  await page.keyboard.press("Escape");
+  await expect(hold).toHaveAttribute("data-state", "idle");
+  await page.mouse.up();
+
+  await hold.focus();
+  for (const shortcut of ["Control+Enter", "Alt+Enter", "Meta+Enter", "Control+Space"]) {
+    await page.keyboard.press(shortcut);
+  }
+  await page.waitForTimeout(1_700);
+  await expect(page.getByTestId("confirms")).toHaveAttribute("data-count", "0");
+  await expect(status).toHaveText("");
+});
+
 test("a mouse hold on a focused button confirms", async ({ page }) => {
   const hold = await button(page);
   await hold.focus();

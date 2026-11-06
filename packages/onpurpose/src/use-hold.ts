@@ -204,13 +204,18 @@ export function useHoldButton({
           endGestureRef.current();
         }
       };
+      const onEscape = (event: globalThis.KeyboardEvent) => {
+        if (event.key === "Escape" && phaseRef.current === "holding") endGestureRef.current();
+      };
       document.addEventListener("visibilitychange", onVisibility);
       window.addEventListener("blur", onWindowBlur);
       document.addEventListener("scroll", onScroll, true);
+      document.addEventListener("keydown", onEscape);
       removePageListenersRef.current = () => {
         document.removeEventListener("visibilitychange", onVisibility);
         window.removeEventListener("blur", onWindowBlur);
         document.removeEventListener("scroll", onScroll, true);
+        document.removeEventListener("keydown", onEscape);
       };
     }
     holdTimerRef.current = window.setTimeout(() => {
@@ -296,20 +301,18 @@ export function useHoldButton({
 
   const onKeyDown = (event: KeyboardEvent<HTMLButtonElement>) => {
     if (event.key !== "Enter" && event.key !== " ") return;
-    if (disabled || pendingRef.current || event.repeat || gestureRef.current) {
-      event.preventDefault();
-      return;
-    }
     event.preventDefault();
+    if (disabled || pendingRef.current || event.repeat || gestureRef.current) return;
+    if (event.ctrlKey || event.metaKey || event.altKey) return;
     gestureRef.current = { kind: "key", key: event.key };
     beginHold();
   };
 
   const onKeyUp = (event: KeyboardEvent<HTMLButtonElement>) => {
-    const gesture = gestureRef.current;
-    if (gesture?.kind !== "key" || gesture.key !== event.key) return;
+    if (event.key !== "Enter" && event.key !== " ") return;
     event.preventDefault();
-    endGesture();
+    const gesture = gestureRef.current;
+    if (gesture?.kind === "key" && gesture.key === event.key) endGesture();
   };
 
   const onBlur = (event: FocusEvent<HTMLButtonElement>) => {

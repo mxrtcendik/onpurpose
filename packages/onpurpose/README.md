@@ -120,6 +120,9 @@ If you pass `onPointerDown`, `onKeyDown`, or another handler the button uses, yo
 ### Keyboard
 
 - Hold Space or Enter. A key that is already down won't start the timer again, and releasing a different key won't stop it.
+- Escape cancels a hold, whether it's a key or a pointer, and letting go of the key afterwards does nothing.
+- Shortcuts like Ctrl+Enter or Cmd+Enter don't start a hold, and don't click the button either.
+- A mouse hold keeps going when Safari takes focus off the button as you press it. Only a keyboard hold cancels when focus leaves.
 
 ### Page
 
