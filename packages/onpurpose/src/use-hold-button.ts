@@ -9,14 +9,17 @@ import {
   useRef,
   useState,
 } from "react";
-import { HOLD_MS, TARGET_PX } from "./styles";
-export type HoldButtonState = "idle" | "holding" | "confirmed";
+import {
+  ARM_MS,
+  DWELL_MS,
+  HAPTIC_MS,
+  HOLD_MS,
+  PRESS_CLICK_MS,
+  TARGET_PX,
+  TOUCH_SLOP_PX,
+} from "./constants";
 
-const DWELL_MS = 700;
-const ARM_MS = 10_000;
-const PRESS_CLICK_MS = 1000;
-const HAPTIC_MS = 15;
-const TOUCH_SLOP_PX = 8;
+export type HoldButtonState = "idle" | "holding" | "confirmed";
 
 const useIsoLayoutEffect = typeof document === "undefined" ? useEffect : useLayoutEffect;
 

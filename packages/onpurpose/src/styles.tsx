@@ -1,11 +1,5 @@
 import { type CSSProperties, useInsertionEffect, version } from "react";
-
-export const HOLD_MS = 1500;
-export const TARGET_PX = 44;
-
-const RETRACT_MS = 200;
-const PRESS_MS = 160;
-const EASE = "cubic-bezier(0.23, 1, 0.32, 1)";
+import { EASE, HOLD_MS, PRESS_MS, RETRACT_MS, TARGET_PX } from "./constants";
 
 const CSS = `
 @layer theme, base, components, utilities;
@@ -154,7 +148,7 @@ function hash(text: string) {
   return (value >>> 0).toString(36);
 }
 
-export const STYLE_KEY = `onpurpose-${hash(CSS)}`;
+const STYLE_KEY = `onpurpose-${hash(CSS)}`;
 
 export const SR_ONLY: CSSProperties = {
   position: "absolute",

@@ -1,7 +1,7 @@
 import type { ComponentPropsWithRef, ReactNode } from "react";
 import { forwardRef, type Ref, useCallback, useId, useRef } from "react";
 import { HoldButtonStyles, SR_ONLY } from "./styles";
-import { type HoldButtonState, useHoldButton } from "./use-hold";
+import { type HoldButtonState, useHoldButton } from "./use-hold-button";
 
 export type { HoldButtonState };
 
